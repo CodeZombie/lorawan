@@ -153,6 +153,12 @@ EndDeviceLorawanMac::~EndDeviceLorawanMac ()
 ////////////////////////
 
 void
+EndDeviceLorawanMac::recievedAck()
+{
+  
+}
+
+void
 EndDeviceLorawanMac::Send (Ptr<Packet> packet)
 {
   NS_LOG_FUNCTION (this << packet);
@@ -344,6 +350,8 @@ EndDeviceLorawanMac::ParseCommands (LoraFrameHeader frameHeader)
           NS_LOG_INFO ("The message is an ACK, not waiting for it anymore.");
 
           NS_LOG_DEBUG ("Reset retransmission variables to default values and cancel retransmission if already scheduled.");
+
+          recievedAck();
 
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, true, m_retxParams.firstAttempt, m_retxParams.packet);

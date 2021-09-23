@@ -307,7 +307,7 @@ LoraInterferenceHelper::IsDestroyedByInterference (Ptr<LoraInterferenceHelper::E
       // Compute the fraction of time the two events are overlapping
       Time overlap = GetOverlapTime (event, interferer);
 
-      NS_LOG_DEBUG ("The two events overlap for " << overlap.GetSeconds () << " s.");
+      NS_LOG_DEBUG ("The two events overlap for " << overlap.GetMicroSeconds  () << " microseconds.");
 
       // Compute the equivalent energy of the interference
       // Power [mW] = 10^(Power[dBm]/10)

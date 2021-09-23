@@ -34,6 +34,104 @@
 namespace ns3 {
 namespace lorawan {
 
+class TXParameterIndividual {
+  public:
+    Ptr<UniformRandomVariable> randomGenerator;
+    int power;
+    int spreadingFactor;
+    int bandwidth;
+    int codingRate;
+    bool successful = true; //we assume its succesful until we actually try to use it.
+    
+    TXParameterIndividual() {
+      init();
+      //spreading factor: 7 to 12
+      spreadingFactor = randomGenerator->GetInteger(7, 12);
+      //power: 2, 4, 6, 8, 10, 12, 14, 16
+      power = randomGenerator->GetInteger(1, 7) * 2; //8
+      //bandwidth: 125000, 250000, 500000
+      int choice = randomGenerator->GetInteger(1, 3);
+      if (choice == 1){
+        bandwidth = 125000;
+      }else if(choice == 2){
+        bandwidth = 250000;
+      }else {
+        bandwidth = 500000;
+      }
+      //coding rate: 1 (4/5), 2 (4/6), 3 (4/7), 4 (4/8)
+      codingRate = randomGenerator->GetInteger(1, 4);
+      Print();
+    }
+
+    TXParameterIndividual(TXParameterIndividual* parent_a, TXParameterIndividual* parent_b){
+      init();
+      //generate parameters based on parent's parameters.
+      int sf_choice = randomGenerator->GetInteger(1,2);
+      if(sf_choice == 1){
+        spreadingFactor = parent_a->spreadingFactor;
+      }else{
+        spreadingFactor = parent_b->spreadingFactor;
+      }
+      
+      int pow_choice = randomGenerator->GetInteger(1,2);
+      if(pow_choice == 1){
+        power = parent_a->power;
+      }else{
+        power = parent_b->power;
+      }
+
+      int bw_choice = randomGenerator->GetInteger(1,2);
+      if(bw_choice == 1){
+        bandwidth = parent_a->bandwidth;
+      }else{
+        bandwidth = parent_b->bandwidth;
+      }
+
+      int cr_choice = randomGenerator->GetInteger(1,2);
+      if(cr_choice == 1){
+        codingRate = parent_a->codingRate;
+      }else{
+        codingRate = parent_b->codingRate;
+      }
+
+      int mutate_choice = randomGenerator->GetInteger(1, 100);
+      if(mutate_choice > 95){
+        //mutate, else do nothing.
+      }
+    }
+
+    void init() {
+      randomGenerator = CreateObject<UniformRandomVariable> ();
+    }
+
+    void Print() {
+      std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << std::endl;
+    }
+
+    float fitness() {
+      //Output 0-1 depending on where the power factor is between the theoretical min and max.
+      //lowest  = 0.0914286
+      //highest = 87.3813
+      //(v - lowest) / (highest - lowest)
+      return 1.0f - (powerConsumption() - 0.0914286) / (87.3813 - 0.0914286);
+      //return powerConsumption();
+    }
+
+    float powerConsumption() {
+      //DataRate * Power
+      //https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7070984/
+      //this function will calculate the amount of power needed to transmit 1000 bytes of data.
+      //1000 is chosen so that values are large enough such that they do not need to be expressed in scientific notation.
+      //the actual value choen is arbitrary and holds no bearing on results.
+      return (1000.0f/dataRate()) * power;
+    }
+
+    float dataRate() {
+      //return spreadingFactor * ((4.0f / 4.0f + codingRate) / ((2^spreadingFactor) / bandwidth ) ) * 1000.0f;
+      return (spreadingFactor * (bandwidth*4 / std::pow(2, spreadingFactor)) * (1.0f/(codingRate+4.0f)));
+    }
+};
+
 /**
  * Class representing the MAC layer of a Class A LoRaWAN device.
  */
@@ -44,6 +142,9 @@ public:
 
   ClassAEndDeviceLorawanMac ();
   virtual ~ClassAEndDeviceLorawanMac ();
+
+  //research 
+  void recievedAck();
 
   /////////////////////
   // Sending methods //
@@ -147,6 +248,16 @@ public:
    */
   double GetSecondReceiveWindowFrequency (void);
 
+  //CUSTOM MACHINE LEARNING MEMBERS:
+
+  bool UseMachineLearningOptimization;
+
+  // Called when an acknowledgement is requested but none is recieved.
+  void AckNotRecieved (void);
+
+  int getIndexOfFittestIndividual(void);
+
+  void advanceGeneration(void);
   /////////////////////////
   // MAC command methods //
   /////////////////////////
@@ -213,6 +324,13 @@ private:
    */
   uint8_t m_rx1DrOffset;
 
+  //The number of Unconfirmed messages we sent out.
+  uint8_t m_unconfirmedTransmissions;
+  uint8_t m_ga_currentIndex;
+
+  bool useGeneticParamaterSelection;
+
+  TXParameterIndividual* population[16];
 }; /* ClassAEndDeviceLorawanMac */
 } /* namespace lorawan */
 } /* namespace ns3 */

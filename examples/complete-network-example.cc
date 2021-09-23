@@ -38,10 +38,10 @@ NS_LOG_COMPONENT_DEFINE ("ComplexLorawanNetworkExample");
 int nDevices = 200;
 int nGateways = 1;
 double radius = 6400; //Note that due to model updates, 7500 m is no longer the maximum distance 
-double simulationTime = 600;
+double simulationTime = 9000;
 
 // Channel model
-bool realisticChannelModel = false;
+bool realisticChannelModel = true;
 
 int appPeriodSeconds = 600;
 
@@ -138,6 +138,7 @@ main (int argc, char *argv[])
 
   // Create the LorawanMacHelper
   LorawanMacHelper macHelper = LorawanMacHelper ();
+  //macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
 
   // Create the LoraHelper
   LoraHelper helper = LoraHelper ();
@@ -319,6 +320,9 @@ main (int argc, char *argv[])
 
   LoraPacketTracker &tracker = helper.GetPacketTracker ();
   std::cout << tracker.CountMacPacketsGlobally (Seconds (0), appStopTime + Hours (1)) << std::endl;
+  std::cout << std::endl << "Packets vs Ack:" << std::endl;
+  std::cout << tracker.CountMacPacketsGloballyCpsr (Seconds (0), appStopTime + Hours (1)) << std::endl;
+  //std::cout << tracker.CountRetransmissions(Seconds (0), appStopTime + Hours (1)) << std::endl;
 
   return 0;
 }

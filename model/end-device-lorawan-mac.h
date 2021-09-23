@@ -45,6 +45,11 @@ public:
   EndDeviceLorawanMac ();
   virtual ~EndDeviceLorawanMac ();
 
+  //research
+
+  virtual void recievedAck();
+
+
   /////////////////////
   // Sending methods //
   /////////////////////

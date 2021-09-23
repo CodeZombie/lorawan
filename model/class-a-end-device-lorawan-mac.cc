@@ -53,6 +53,14 @@ ClassAEndDeviceLorawanMac::ClassAEndDeviceLorawanMac () :
   m_rx1DrOffset (0)
 {
   NS_LOG_FUNCTION (this);
+  m_unconfirmedTransmissions = 0;
+  m_ga_currentIndex = 0; //the current set of params in the GA we're using to transmit.
+  //initialize the GA population here.
+  // this should create n individuals with ascending datarates/power
+  
+  for(int i = 0; i < 16; i++){
+    population[i] = new TXParameterIndividual();
+  }
 
   // Void the two receiveWindow events
   m_closeFirstWindow = EventId ();
@@ -61,6 +69,8 @@ ClassAEndDeviceLorawanMac::ClassAEndDeviceLorawanMac () :
   m_closeSecondWindow.Cancel ();
   m_secondReceiveWindow = EventId ();
   m_secondReceiveWindow.Cancel ();
+  m_ga_currentIndex = 0;
+  useGeneticParamaterSelection = true;
 }
 
 ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac ()
@@ -79,7 +89,14 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
   // Add headers, prepare TX parameters and send the packet
   /////////////////////////////////////////////////////////
 
-  NS_LOG_DEBUG ("PacketToSend: " << packetToSend);
+  //NS_LOG_DEBUG ("PacketToSend: " << packetToSend);
+
+  NS_LOG_LOGIC("Sending a packet to PHY.");
+
+  //here is where we need to select and individual to test.
+  //we aught to have a list of 8 or so individuals and an int representing the index of the current one.
+  //
+
 
   // Data Rate Adaptation as in LoRaWAN specification, V1.0.2 (2016)
   if (m_enableDRAdapt && (m_dataRate > 0)
@@ -89,13 +106,23 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
       m_txPower = 14; // Reset transmission power
       m_dataRate = m_dataRate - 1;
     }
+  
 
   // Craft LoraTxParameters object
   LoraTxParameters params;
-  params.sf = GetSfFromDataRate (m_dataRate);
+
+  if(useGeneticParamaterSelection){
+    m_txPower = population[m_ga_currentIndex]->power;
+    params.sf = population[m_ga_currentIndex]->spreadingFactor;
+    params.codingRate = population[m_ga_currentIndex]->codingRate;
+    params.bandwidthHz = population[m_ga_currentIndex]->bandwidth;
+  }else{
+    params.sf = GetSfFromDataRate (m_dataRate);
+    params.codingRate = m_codingRate;
+    params.bandwidthHz = GetBandwidthFromDataRate (m_dataRate);
+  }
+
   params.headerDisabled = m_headerDisabled;
-  params.codingRate = m_codingRate;
-  params.bandwidthHz = GetBandwidthFromDataRate (m_dataRate);
   params.nPreamble = m_nPreambleSymbols;
   params.crcEnabled = 1;
   params.lowDataRateOptimizationEnabled = LoraPhy::GetTSym (params) > MilliSeconds (16) ? true : false;
@@ -104,7 +131,7 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
 
   Ptr<LogicalLoraChannel> txChannel = GetChannelForTx ();
 
-  NS_LOG_DEBUG ("PacketToSend: " << packetToSend);
+  //NS_LOG_DEBUG ("PacketToSend: " << packetToSend);
   m_phy->Send (packetToSend, params, txChannel->GetFrequency (), m_txPower);
 
   //////////////////////////////////////////////
@@ -127,9 +154,7 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
   // Instruct the PHY on the right Spreading Factor to listen for during the window
   // create a SetReplyDataRate function?
   uint8_t replyDataRate = GetFirstReceiveWindowDataRate ();
-  NS_LOG_DEBUG ("m_dataRate: " << unsigned (m_dataRate) <<
-                ", m_rx1DrOffset: " << unsigned (m_rx1DrOffset) <<
-                ", replyDataRate: " << unsigned (replyDataRate) << ".");
+  //NS_LOG_DEBUG ("m_dataRate: " << unsigned (m_dataRate) << ", m_rx1DrOffset: " << unsigned (m_rx1DrOffset) << ", replyDataRate: " << unsigned (replyDataRate) << ".");
 
   m_phy->GetObject<EndDeviceLoraPhy> ()->SetSpreadingFactor
     (GetSfFromDataRate (replyDataRate));
@@ -142,7 +167,9 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
 void
 ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
 {
-  NS_LOG_FUNCTION (this << packet);
+  //NS_LOG_FUNCTION (this << packet);
+
+  NS_LOG_LOGIC("Recieving a packet!");
 
   // Work on a copy of the packet
   Ptr<Packet> packetCopy = packet->Copy ();
@@ -151,7 +178,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
   LorawanMacHeader mHdr;
   packetCopy->RemoveHeader (mHdr);
 
-  NS_LOG_DEBUG ("Mac Header: " << mHdr);
+  //NS_LOG_DEBUG ("Mac Header: " << mHdr);
 
   // Only keep analyzing the packet if it's downlink
   if (!mHdr.IsUplink ())
@@ -163,7 +190,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
       fHdr.SetAsDownlink ();
       packetCopy->RemoveHeader (fHdr);
 
-      NS_LOG_DEBUG ("Frame Header: " << fHdr);
+      //NS_LOG_DEBUG ("Frame Header: " << fHdr);
 
       // Determine whether this packet is for us
       bool messageForUs = (m_address == fHdr.GetAddress ());
@@ -202,6 +229,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
                   uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
                   m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
                   NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+                  AckNotRecieved();
 
                   // Reset retransmission parameters
                   resetRetransmissionParameters ();
@@ -210,6 +238,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
                 {
                   this->Send (m_retxParams.packet);
                   NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+                  AckNotRecieved();
                 }
             }
         }
@@ -221,12 +250,16 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
         {
           this->Send (m_retxParams.packet);
           NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+          AckNotRecieved();
         }
       else
         {
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
           NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+          AckNotRecieved();
+
+          //NOTE: This is where the packet totally fails after 8 attempts. ??? (IS it? There are 3 other spots where this might be happening too)
 
           // Reset retransmission parameters
           resetRetransmissionParameters ();
@@ -241,6 +274,8 @@ ClassAEndDeviceLorawanMac::FailedReception (Ptr<Packet const> packet)
 {
   NS_LOG_FUNCTION (this << packet);
 
+  NS_LOG_LOGIC("Failed Reception.");
+
   // Switch to sleep after a failed reception
   m_phy->GetObject<EndDeviceLoraPhy> ()->SwitchToSleep ();
 
@@ -250,12 +285,14 @@ ClassAEndDeviceLorawanMac::FailedReception (Ptr<Packet const> packet)
         {
           this->Send (m_retxParams.packet);
           NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+          AckNotRecieved();
         }
       else
         {
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
           NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+          AckNotRecieved();
 
           // Reset retransmission parameters
           resetRetransmissionParameters ();
@@ -411,6 +448,7 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
       if (m_retxParams.retxLeft > 0 )
         {
           NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+          AckNotRecieved();
           this->Send (m_retxParams.packet);
         }
 
@@ -419,6 +457,9 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
           NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+          AckNotRecieved();
+          //NOTE: This seems to be where the packet ACK timeout occurs. This should be where we do our ML operation.
+          //BUT, the system does 8 retransmissions. Each of these should learn as well!
 
           // Reset retransmission parameters
           resetRetransmissionParameters ();
@@ -433,12 +474,111 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
     {
       uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft );
       m_requiredTxCallback (txs, true, m_retxParams.firstAttempt, m_retxParams.packet);
-      NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) <<
-                   " transmissions left. We were not transmitting confirmed messages.");
+      NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " transmissions left. We were not transmitting confirmed messages.");
 
       // Reset retransmission parameters
       resetRetransmissionParameters ();
     }
+}
+
+void 
+ClassAEndDeviceLorawanMac::AckNotRecieved () 
+{
+  //Get the active individual and mark is as NotRecieved.
+  NS_LOG_DEBUG("ACK NOT RECIEVED! OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+  m_unconfirmedTransmissions++;
+  NS_LOG_DEBUG("Used " << unsigned(m_unconfirmedTransmissions) << " transmissions!");
+  population[m_ga_currentIndex]->successful = false;
+  advanceGeneration();
+}
+
+
+void
+ClassAEndDeviceLorawanMac::recievedAck () 
+{
+  //Get the active individual and mark it as recieved.
+  NS_LOG_LOGIC("RECIEVEIVIEIVIEIVIEVEIVIEVIEIVIEIVED ACK!!!!");
+  population[m_ga_currentIndex]->successful = true;
+  advanceGeneration();
+}
+
+int
+ClassAEndDeviceLorawanMac::getIndexOfFittestIndividual() 
+{
+  int fittestIndex = -1;
+  for(int i = 0; i<16; i++){
+    if(population[i] == NULL){
+      continue;
+    }
+    if(population[i]->successful == false){
+      continue;
+    }
+    if(fittestIndex == -1 || population[i]->fitness() > population[fittestIndex]->fitness()){
+      fittestIndex = i;
+    }
+  }
+  
+  return fittestIndex;
+}
+
+void
+ClassAEndDeviceLorawanMac::advanceGeneration()
+{
+  if(!useGeneticParamaterSelection) {
+    return;
+  }
+  NS_LOG_LOGIC("Advancing to the next individual in the population: " << m_ga_currentIndex);
+  std::cout << m_ga_currentIndex << std::endl;
+  if(m_ga_currentIndex < 15){
+    m_ga_currentIndex++;
+  }else{
+    //generate new paramaters
+    NS_LOG_LOGIC("Generating a new population.");
+    m_ga_currentIndex = 0;
+    //Get all succesful individuals and sort them from most fit to least.
+    //Take the top 4, generating new random ones if there are not 4 (NOTE: weighted toward being longer range)
+
+    NS_LOG_LOGIC("Finding the top 4 fittest individuals");
+    //Find the top 4 fittest individuals. 
+    TXParameterIndividual* fitpop[4]; 
+    for(int i = 0; i < 4; i++){
+      int fittestIndex = getIndexOfFittestIndividual();
+      if(fittestIndex == -1){ //if no fittest was found, generate a new one randomly.
+      //NOTE: we want to insert some bias here toward more energy-intensive settings as if we get here it means
+      //  we probably need stronger settings.
+        fitpop[i] = new TXParameterIndividual();
+      }else{
+        fitpop[i] = population[fittestIndex];
+        population[fittestIndex] = NULL;
+      }
+    }
+  NS_LOG_LOGIC("Deleting all remaining objects");
+    //delete all remaining unfit/unsuccesful objects from population.
+    for(int i = 0; i < 16; i++){
+      if(population[i] != NULL){
+        delete population[i];
+      }
+    }
+    NS_LOG_LOGIC("Print the fittest");
+    //Print the most fit
+    std::cout << "FITTEST: " << std::endl;
+    for(int i = 0; i<4; i++){
+      fitpop[i]->Print();
+    }
+
+    //create a new population by combining the 4 fit individuals.
+    for(int x = 0; x < 4; x++){
+      for(int y = 0; y < 4; y++){
+        population[(y*4) + x] = new TXParameterIndividual(fitpop[x], fitpop[y]);
+      }
+    }
+
+    //delete all objects from fitpop.
+    for(int i = 0; i < 4; i++){
+      delete fitpop[i];
+    }
+
+  }
 }
 
 /////////////////////////
