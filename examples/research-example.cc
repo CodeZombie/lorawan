@@ -28,13 +28,44 @@ using namespace lorawan;
 
 NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 
-Time simTime = Days (1);
-int NumberOfNodes = 2;
-Time transmitInterval = Hours (12);
+Time simTime = Hours (1200);
+int NumberOfNodes = 4;
+Time transmitInterval = Hours(0); //forces it to choose randomly
 
 bool adrEnabled = true;
+
+std::ofstream fitnessOverTimeTraceFile;
+std::ofstream TransmissionCountFile;
+std::ofstream FailedTransmissionCountFile;
+/* Keep track of global NACK'd txs */
+void FrameSentCallback(uint32_t oldval, uint32_t newval) {
+  //failedTransmissions++;
+  TransmissionCountFile << ns3::Simulator::Now().GetHours() << " " << newval << std::endl;
+}
+
+void intervalMethod(NodeContainer *endDevices) {
+  for (NodeContainer::Iterator j = endDevices->Begin (); j != endDevices->End (); ++j)
+    {
+        DoubleValue val;
+        (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute("LastFitnessLevel", val); 
+        fitnessOverTimeTraceFile << ns3::Simulator::Now().GetHours() << " " << val.Get() << std::endl;
+
+
+        IntegerValue failedTransmissionsValue;
+        (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute("FailedTransmissionCount", failedTransmissionsValue); 
+        FailedTransmissionCountFile << ns3::Simulator::Now().GetHours() << " " << failedTransmissionsValue.Get() << std::endl;
+    }
+
+  Simulator::Schedule(Hours(0.25), &intervalMethod, endDevices);
+}
+
+
 int main (int argc, char *argv[])
 {
+  //open trace files:
+  fitnessOverTimeTraceFile.open ("fitnessOverTime.txt");
+  TransmissionCountFile.open("TransmissionCount.txt");
+  FailedTransmissionCountFile.open("FailedTransmissionCount.txt");
 
   // Set up logging
   //LogComponentEnable ("SimpleLorawanNetworkExample", LOG_LEVEL_ALL);
@@ -45,7 +76,7 @@ int main (int argc, char *argv[])
   //LogComponentEnable ("LoraInterferenceHelper", LOG_LEVEL_ALL);
   //LogComponentEnable ("LorawanMac", LOG_LEVEL_ALL);
   //LogComponentEnable ("EndDeviceLorawanMac", LOG_LEVEL_ALL);
-  LogComponentEnable ("ClassAEndDeviceLorawanMac", LOG_LEVEL_ALL);
+  //LogComponentEnable ("ClassAEndDeviceLorawanMac", LOG_LEVEL_ALL);
   //LogComponentEnable ("GatewayLorawanMac", LOG_LEVEL_ALL);
   //LogComponentEnable ("LogicalLoraChannelHelper", LOG_LEVEL_ALL);
   //LogComponentEnable ("LogicalLoraChannel", LOG_LEVEL_ALL);
@@ -89,7 +120,7 @@ int main (int argc, char *argv[])
   allocator->Add (Vector (0,0,0));
   mobility.SetPositionAllocator (allocator);*/
   //2650
-  mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (6000), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
+  mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (100), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
   // Create the LoraPhyHelper
@@ -123,6 +154,7 @@ int main (int argc, char *argv[])
 
   // Create a set of nodes
   NodeContainer endDevices;
+  
   endDevices.Create (NumberOfNodes);
 
   // Assign a mobility model to the node
@@ -135,6 +167,20 @@ int main (int argc, char *argv[])
   macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
 
   helper.Install (phyHelper, macHelper, endDevices);
+
+
+  //print end-device locations:
+  std::ofstream locationFile;
+  locationFile.open ("endDeviceLocations.txt");
+  for (NodeContainer::Iterator j = endDevices.Begin (); j != endDevices.End (); ++j)
+    {
+      Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel> ();
+      Vector position = mobility->GetPosition ();
+      locationFile << position.x << " " << position.y << std::endl;
+      
+      //connect a trace :)
+      (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->TraceConnectWithoutContext ("NumberOfFramesSent", MakeCallback(&FrameSentCallback));
+    }
 
   /*********************
   *  Create Gateways  *
@@ -150,6 +196,16 @@ int main (int argc, char *argv[])
   phyHelper.SetDeviceType (LoraPhyHelper::GW);
   macHelper.SetDeviceType (LorawanMacHelper::GW);
   helper.Install (phyHelper, macHelper, gateways);
+
+    //print end-device locations:
+  std::ofstream gwlocationFile;
+  gwlocationFile.open ("gatewayLocations.txt");
+  for (NodeContainer::Iterator j = gateways.Begin (); j != gateways.End (); ++j)
+    {
+      Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel> ();
+      Vector position = mobility->GetPosition ();
+      gwlocationFile << position.x << " " << position.y << std::endl;
+    }
 
 
 ///////////// Enable periodic phy output to file
@@ -175,8 +231,8 @@ int main (int argc, char *argv[])
   /******************
    * Set Data Rates *
    ******************/
-  std::vector<int> sfQuantity (6);
-  sfQuantity = macHelper.SetSpreadingFactorsUp (endDevices, gateways, channel);
+  //std::vector<int> sfQuantity (6);
+  //sfQuantity = macHelper.SetSpreadingFactorsUp (endDevices, gateways, channel);
   
 
   /**************************
@@ -200,6 +256,8 @@ int main (int argc, char *argv[])
   ****************/
   
   Simulator::Stop (simTime);
+
+  Simulator::Schedule(Hours(0.25), &intervalMethod, &endDevices);
 
   Simulator::Run ();
   //lper.DoPrintDeviceStatus (endDevices, gateways, "DeviceStatus_COOL.txt");

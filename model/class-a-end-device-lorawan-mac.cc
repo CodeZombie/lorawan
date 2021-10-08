@@ -41,7 +41,22 @@ ClassAEndDeviceLorawanMac::GetTypeId (void)
 static TypeId tid = TypeId ("ns3::ClassAEndDeviceLorawanMac")
   .SetParent<EndDeviceLorawanMac> ()
   .SetGroupName ("lorawan")
-  .AddConstructor<ClassAEndDeviceLorawanMac> ();
+  .AddConstructor<ClassAEndDeviceLorawanMac> ()
+  .AddTraceSource ("NumberOfFramesSent",
+    "The number of Frames sent from this node.",
+    MakeTraceSourceAccessor (&ClassAEndDeviceLorawanMac::m_numberOfFramesSent),
+    "ns3::TracedValueCallback::Int32")
+  .AddAttribute("FailedTransmissionCount",
+      "The number of transmissions that didn't get an ACK.",
+      DoubleValue (0),
+      MakeIntegerAccessor (&ClassAEndDeviceLorawanMac::m_FailedTransmissions),
+      MakeIntegerChecker<uint32_t> ())
+  .AddAttribute("LastFitnessLevel", 
+    "The fitness level of the last tx paramset used to tx.",
+    DoubleValue(0),
+    MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::m_lastFitnessLevel),
+    MakeDoubleChecker<float> ());
+
 return tid;
 }
 
@@ -53,14 +68,6 @@ ClassAEndDeviceLorawanMac::ClassAEndDeviceLorawanMac () :
   m_rx1DrOffset (0)
 {
   NS_LOG_FUNCTION (this);
-  m_unconfirmedTransmissions = 0;
-  m_ga_currentIndex = 0; //the current set of params in the GA we're using to transmit.
-  //initialize the GA population here.
-  // this should create n individuals with ascending datarates/power
-  
-  for(int i = 0; i < 16; i++){
-    population[i] = new TXParameterIndividual();
-  }
 
   // Void the two receiveWindow events
   m_closeFirstWindow = EventId ();
@@ -71,6 +78,31 @@ ClassAEndDeviceLorawanMac::ClassAEndDeviceLorawanMac () :
   m_secondReceiveWindow.Cancel ();
   m_ga_currentIndex = 0;
   useGeneticParamaterSelection = true;
+
+  if(useGeneticParamaterSelection) {
+    m_ga_currentIndex = 0; //the index of the current individual in the array being used to tx.
+    // this should create n individuals with ascending datarates/power
+    
+    /*for(int i = 0; i < 16; i++){
+      population[i] = new TXParameterIndividual();
+    }*/
+    population[0] = new TXParameterIndividual(7, 2, 125000, 1);
+    population[1] = new TXParameterIndividual(7, 14, 250000, 1);
+    population[2] = new TXParameterIndividual(8, 4, 125000, 1);
+    population[3] = new TXParameterIndividual(8, 12, 250000, 2);
+    population[4] = new TXParameterIndividual(9, 2, 125000, 1);
+    population[5] = new TXParameterIndividual(9, 10, 250000, 3);
+    population[6] = new TXParameterIndividual(10, 6, 125000, 2);
+    population[7] = new TXParameterIndividual(10, 14, 250000, 1);
+    population[8] = new TXParameterIndividual(11, 8, 125000, 2);
+    population[9] = new TXParameterIndividual(11, 2, 250000, 1);
+    population[10] = new TXParameterIndividual(12, 14, 125000, 2);
+    population[11] = new TXParameterIndividual(12, 2, 250000, 1);
+    population[12] = new TXParameterIndividual(7, 12, 125000, 4);
+    population[13] = new TXParameterIndividual(8, 4, 250000, 3);
+    population[14] = new TXParameterIndividual(9, 12, 125000, 4);
+    population[15] = new TXParameterIndividual(8, 8, 250000, 3);
+  }
 }
 
 ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac ()
@@ -85,18 +117,18 @@ ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac ()
 void
 ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
 {
+  m_numberOfFramesSent++;
   /////////////////////////////////////////////////////////
   // Add headers, prepare TX parameters and send the packet
   /////////////////////////////////////////////////////////
 
   //NS_LOG_DEBUG ("PacketToSend: " << packetToSend);
 
-  NS_LOG_LOGIC("Sending a packet to PHY.");
+  //NS_LOG_LOGIC("Sending a packet to PHY.");
 
   //here is where we need to select and individual to test.
   //we aught to have a list of 8 or so individuals and an int representing the index of the current one.
   //
-
 
   // Data Rate Adaptation as in LoRaWAN specification, V1.0.2 (2016)
   if (m_enableDRAdapt && (m_dataRate > 0)
@@ -107,6 +139,7 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
       m_dataRate = m_dataRate - 1;
     }
   
+  m_lastFitnessLevel = population[0]->fitness();
 
   // Craft LoraTxParameters object
   LoraTxParameters params;
@@ -116,6 +149,15 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
     params.sf = population[m_ga_currentIndex]->spreadingFactor;
     params.codingRate = population[m_ga_currentIndex]->codingRate;
     params.bandwidthHz = population[m_ga_currentIndex]->bandwidth;
+    //manually set the datarate:
+    if(params.sf == 12) { m_dataRate = 0; }
+    if(params.sf == 11) { m_dataRate = 1; }
+    if(params.sf == 10) { m_dataRate = 2; }
+    if(params.sf == 9) { m_dataRate = 3; }
+    if(params.sf == 8) { m_dataRate = 4; }
+    if(params.sf == 7 && params.bandwidthHz == 125000) { m_dataRate = 5; }
+    if(params.sf == 7 && params.bandwidthHz == 250000) { m_dataRate = 6; }
+    
   }else{
     params.sf = GetSfFromDataRate (m_dataRate);
     params.codingRate = m_codingRate;
@@ -169,7 +211,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
 {
   //NS_LOG_FUNCTION (this << packet);
 
-  NS_LOG_LOGIC("Recieving a packet!");
+  //NS_LOG_LOGIC("Recieving a packet!");
 
   // Work on a copy of the packet
   Ptr<Packet> packetCopy = packet->Copy ();
@@ -183,7 +225,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
   // Only keep analyzing the packet if it's downlink
   if (!mHdr.IsUplink ())
     {
-      NS_LOG_INFO ("Found a downlink packet.");
+      //NS_LOG_INFO ("Found a downlink packet.");
 
       // Remove the Frame Header
       LoraFrameHeader fHdr;
@@ -197,7 +239,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
 
       if (messageForUs)
         {
-          NS_LOG_INFO ("The message is for us!");
+          //NS_LOG_INFO ("The message is for us!");
 
           // If it exists, cancel the second receive window event
           // THIS WILL BE GetReceiveWindow()
@@ -215,7 +257,7 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
         }
       else
         {
-          NS_LOG_DEBUG ("The message is intended for another recipient.");
+          //NS_LOG_DEBUG ("The message is intended for another recipient.");
 
           // In this case, we are either receiving in the first receive window
           // and finishing reception inside the second one, or receiving a
@@ -245,18 +287,18 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
     }
   else if (m_retxParams.waitingAck && m_secondReceiveWindow.IsExpired ())
     {
-      NS_LOG_INFO ("The packet we are receiving is in uplink.");
+      //NS_LOG_INFO ("The packet we are receiving is in uplink.");
       if (m_retxParams.retxLeft > 0)
         {
           this->Send (m_retxParams.packet);
-          NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+          //NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
           AckNotRecieved();
         }
       else
         {
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
-          NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+          //NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
           AckNotRecieved();
 
           //NOTE: This is where the packet totally fails after 8 attempts. ??? (IS it? There are 3 other spots where this might be happening too)
@@ -272,9 +314,9 @@ ClassAEndDeviceLorawanMac::Receive (Ptr<Packet const> packet)
 void
 ClassAEndDeviceLorawanMac::FailedReception (Ptr<Packet const> packet)
 {
-  NS_LOG_FUNCTION (this << packet);
+  //NS_LOG_FUNCTION (this << packet);
 
-  NS_LOG_LOGIC("Failed Reception.");
+  //NS_LOG_LOGIC("Failed Reception.");
 
   // Switch to sleep after a failed reception
   m_phy->GetObject<EndDeviceLoraPhy> ()->SwitchToSleep ();
@@ -284,14 +326,14 @@ ClassAEndDeviceLorawanMac::FailedReception (Ptr<Packet const> packet)
       if (m_retxParams.retxLeft > 0)
         {
           this->Send (m_retxParams.packet);
-          NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+          //NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
           AckNotRecieved();
         }
       else
         {
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
-          NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+          //NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
           AckNotRecieved();
 
           // Reset retransmission parameters
@@ -303,7 +345,7 @@ ClassAEndDeviceLorawanMac::FailedReception (Ptr<Packet const> packet)
 void
 ClassAEndDeviceLorawanMac::TxFinished (Ptr<const Packet> packet)
 {
-  NS_LOG_FUNCTION_NOARGS ();
+  //NS_LOG_FUNCTION_NOARGS ();
 
   // Schedule the opening of the first receive window
   Simulator::Schedule (m_receiveDelay1,
@@ -329,7 +371,7 @@ ClassAEndDeviceLorawanMac::TxFinished (Ptr<const Packet> packet)
 void
 ClassAEndDeviceLorawanMac::OpenFirstReceiveWindow (void)
 {
-  NS_LOG_FUNCTION_NOARGS ();
+  //NS_LOG_FUNCTION_NOARGS ();
 
   // Set Phy in Standby mode
   m_phy->GetObject<EndDeviceLoraPhy> ()->SwitchToStandby ();
@@ -348,7 +390,7 @@ ClassAEndDeviceLorawanMac::OpenFirstReceiveWindow (void)
 void
 ClassAEndDeviceLorawanMac::CloseFirstReceiveWindow (void)
 {
-  NS_LOG_FUNCTION_NOARGS ();
+  //NS_LOG_FUNCTION_NOARGS ();
 
   Ptr<EndDeviceLoraPhy> phy = m_phy->GetObject<EndDeviceLoraPhy> ();
 
@@ -379,7 +421,7 @@ ClassAEndDeviceLorawanMac::CloseFirstReceiveWindow (void)
 void
 ClassAEndDeviceLorawanMac::OpenSecondReceiveWindow (void)
 {
-  NS_LOG_FUNCTION_NOARGS ();
+  //NS_LOG_FUNCTION_NOARGS ();
 
   // Check for receiver status: if it's locked on a packet, don't open this
   // window at all.
@@ -394,8 +436,7 @@ ClassAEndDeviceLorawanMac::OpenSecondReceiveWindow (void)
   m_phy->GetObject<EndDeviceLoraPhy> ()->SwitchToStandby ();
 
   // Switch to appropriate channel and data rate
-  NS_LOG_INFO ("Using parameters: " << m_secondReceiveWindowFrequency << "Hz, DR"
-                                    << unsigned(m_secondReceiveWindowDataRate));
+  //NS_LOG_INFO ("Using parameters: " << m_secondReceiveWindowFrequency << "Hz, DR" << unsigned(m_secondReceiveWindowDataRate));
 
   m_phy->GetObject<EndDeviceLoraPhy> ()->SetFrequency
     (m_secondReceiveWindowFrequency);
@@ -416,7 +457,7 @@ ClassAEndDeviceLorawanMac::OpenSecondReceiveWindow (void)
 void
 ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
 {
-  NS_LOG_FUNCTION_NOARGS ();
+  //NS_LOG_FUNCTION_NOARGS ();
 
   Ptr<EndDeviceLoraPhy> phy = m_phy->GetObject<EndDeviceLoraPhy> ();
 
@@ -434,7 +475,7 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
       break;
     case EndDeviceLoraPhy::RX:
       // PHY is receiving: let it finish
-      NS_LOG_DEBUG ("PHY is receiving: Receive will handle the result.");
+      //NS_LOG_DEBUG ("PHY is receiving: Receive will handle the result.");
       return;
     case EndDeviceLoraPhy::STANDBY:
       // Turn PHY layer to sleep
@@ -444,19 +485,19 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
 
   if (m_retxParams.waitingAck)
     {
-      NS_LOG_DEBUG ("No reception initiated by PHY: rescheduling transmission.");
+      //NS_LOG_DEBUG ("No reception initiated by PHY: rescheduling transmission.");
       if (m_retxParams.retxLeft > 0 )
         {
-          NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
+          //NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " retransmissions left: rescheduling transmission.");
           AckNotRecieved();
           this->Send (m_retxParams.packet);
         }
-
+      //we have no retransmissions left and we aren't detecting a preamble...
       else if (m_retxParams.retxLeft == 0 && m_phy->GetObject<EndDeviceLoraPhy> ()->GetState () != EndDeviceLoraPhy::RX)
         {
           uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft);
           m_requiredTxCallback (txs, false, m_retxParams.firstAttempt, m_retxParams.packet);
-          NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
+          //NS_LOG_DEBUG ("Failure: no more retransmissions left. Used " << unsigned(txs) << " transmissions.");
           AckNotRecieved();
           //NOTE: This seems to be where the packet ACK timeout occurs. This should be where we do our ML operation.
           //BUT, the system does 8 retransmissions. Each of these should learn as well!
@@ -474,7 +515,7 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
     {
       uint8_t txs = m_maxNumbTx - (m_retxParams.retxLeft );
       m_requiredTxCallback (txs, true, m_retxParams.firstAttempt, m_retxParams.packet);
-      NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " transmissions left. We were not transmitting confirmed messages.");
+      //NS_LOG_INFO ("We have " << unsigned(m_retxParams.retxLeft) << " transmissions left. We were not transmitting confirmed messages.");
 
       // Reset retransmission parameters
       resetRetransmissionParameters ();
@@ -484,21 +525,27 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
 void 
 ClassAEndDeviceLorawanMac::AckNotRecieved () 
 {
+  if(!useGeneticParamaterSelection) {
+    return;
+  }
   //Get the active individual and mark is as NotRecieved.
-  NS_LOG_DEBUG("ACK NOT RECIEVED! OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-  m_unconfirmedTransmissions++;
-  NS_LOG_DEBUG("Used " << unsigned(m_unconfirmedTransmissions) << " transmissions!");
-  population[m_ga_currentIndex]->successful = false;
+  //NS_LOG_DEBUG("ACK NOT RECIEVED! OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+  population[m_ga_currentIndex]->successful = 0;
   advanceGeneration();
+  m_FailedTransmissions++;
+  //std::cout << "Failed TX: " << m_FailedTransmissions << std::endl;
 }
 
 
 void
 ClassAEndDeviceLorawanMac::recievedAck () 
 {
+  if(!useGeneticParamaterSelection) {
+    return;
+  }
   //Get the active individual and mark it as recieved.
-  NS_LOG_LOGIC("RECIEVEIVIEIVIEIVIEVEIVIEVIEIVIEIVED ACK!!!!");
-  population[m_ga_currentIndex]->successful = true;
+  //NS_LOG_LOGIC("RECIEVEIVIEIVIEIVIEVEIVIEVIEIVIEIVED ACK!!!!");
+  population[m_ga_currentIndex]->successful = 1;
   advanceGeneration();
 }
 
@@ -510,7 +557,7 @@ ClassAEndDeviceLorawanMac::getIndexOfFittestIndividual()
     if(population[i] == NULL){
       continue;
     }
-    if(population[i]->successful == false){
+    if(population[i]->successful == 0){
       continue;
     }
     if(fittestIndex == -1 || population[i]->fitness() > population[fittestIndex]->fitness()){
@@ -524,21 +571,30 @@ ClassAEndDeviceLorawanMac::getIndexOfFittestIndividual()
 void
 ClassAEndDeviceLorawanMac::advanceGeneration()
 {
+  if(currentNumberOfGenerations >= maxNumberOfGenerations){
+    m_ga_currentIndex = 0;
+    return;
+  }
+
+  //currentNumberOfGenerations++;
+
   if(!useGeneticParamaterSelection) {
     return;
   }
-  NS_LOG_LOGIC("Advancing to the next individual in the population: " << m_ga_currentIndex);
-  std::cout << m_ga_currentIndex << std::endl;
+  //population[m_ga_currentIndex]->Print();
+  //NS_LOG_LOGIC("Advancing to the next individual in the population: " << m_ga_currentIndex);
+  //std::cout << +m_ga_currentIndex << std::endl;
   if(m_ga_currentIndex < 15){
     m_ga_currentIndex++;
   }else{
+    //std::cout << "Generating a new population" << std::endl;
     //generate new paramaters
-    NS_LOG_LOGIC("Generating a new population.");
+    //NS_LOG_LOGIC("Generating a new population.");
     m_ga_currentIndex = 0;
     //Get all succesful individuals and sort them from most fit to least.
     //Take the top 4, generating new random ones if there are not 4 (NOTE: weighted toward being longer range)
 
-    NS_LOG_LOGIC("Finding the top 4 fittest individuals");
+    //NS_LOG_LOGIC("Finding the top 4 fittest individuals");
     //Find the top 4 fittest individuals. 
     TXParameterIndividual* fitpop[4]; 
     for(int i = 0; i < 4; i++){
@@ -552,18 +608,12 @@ ClassAEndDeviceLorawanMac::advanceGeneration()
         population[fittestIndex] = NULL;
       }
     }
-  NS_LOG_LOGIC("Deleting all remaining objects");
+  //NS_LOG_LOGIC("Deleting all remaining objects");
     //delete all remaining unfit/unsuccesful objects from population.
     for(int i = 0; i < 16; i++){
       if(population[i] != NULL){
         delete population[i];
       }
-    }
-    NS_LOG_LOGIC("Print the fittest");
-    //Print the most fit
-    std::cout << "FITTEST: " << std::endl;
-    for(int i = 0; i<4; i++){
-      fitpop[i]->Print();
     }
 
     //create a new population by combining the 4 fit individuals.
@@ -588,7 +638,7 @@ ClassAEndDeviceLorawanMac::advanceGeneration()
 Time
 ClassAEndDeviceLorawanMac::GetNextClassTransmissionDelay (Time waitingTime)
 {
-  NS_LOG_FUNCTION_NOARGS ();
+  //NS_LOG_FUNCTION_NOARGS ();
 
   // This is a new packet from APP; it can not be sent until the end of the
   // second receive window (if the second recieve window has not closed yet)
@@ -617,8 +667,7 @@ ClassAEndDeviceLorawanMac::GetNextClassTransmissionDelay (Time waitingTime)
       // Compute the duration until ACK_TIMEOUT (It may be a negative number, but it doesn't matter.)
       Time retransmitWaitingTime = Time(m_secondReceiveWindow.GetTs()) - Simulator::Now() + Seconds (ack_timeout);
 
-      NS_LOG_DEBUG("ack_timeout:" << ack_timeout <<
-                   " retransmitWaitingTime:" << retransmitWaitingTime.GetSeconds());
+      //NS_LOG_DEBUG("ack_timeout:" << ack_timeout << " retransmitWaitingTime:" << retransmitWaitingTime.GetSeconds());
       waitingTime = std::max (waitingTime, retransmitWaitingTime);
     }
 
@@ -662,7 +711,7 @@ ClassAEndDeviceLorawanMac::GetSecondReceiveWindowFrequency (void)
 void
 ClassAEndDeviceLorawanMac::OnRxClassParamSetupReq (Ptr<RxParamSetupReq> rxParamSetupReq)
 {
-  NS_LOG_FUNCTION (this << rxParamSetupReq);
+  //NS_LOG_FUNCTION (this << rxParamSetupReq);
 
   bool offsetOk = true;
   bool dataRateOk = true;
@@ -671,8 +720,7 @@ ClassAEndDeviceLorawanMac::OnRxClassParamSetupReq (Ptr<RxParamSetupReq> rxParamS
   uint8_t rx2DataRate = rxParamSetupReq->GetRx2DataRate ();
   double frequency = rxParamSetupReq->GetFrequency ();
 
-  NS_LOG_FUNCTION (this << unsigned (rx1DrOffset) << unsigned (rx2DataRate) <<
-                   frequency);
+  //NS_LOG_FUNCTION (this << unsigned (rx1DrOffset) << unsigned (rx2DataRate) << frequency);
 
   // Check that the desired offset is valid
   if ( !(0 <= rx1DrOffset && rx1DrOffset <= 5))
@@ -693,7 +741,7 @@ ClassAEndDeviceLorawanMac::OnRxClassParamSetupReq (Ptr<RxParamSetupReq> rxParamS
   m_secondReceiveWindowFrequency = frequency;
 
   // Craft a RxParamSetupAns as response
-  NS_LOG_INFO ("Adding RxParamSetupAns reply");
+  //NS_LOG_INFO ("Adding RxParamSetupAns reply");
   m_macCommandList.push_back (CreateObject<RxParamSetupAns> (offsetOk,
                                                              dataRateOk, true));
 

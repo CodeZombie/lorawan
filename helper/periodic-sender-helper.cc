@@ -91,6 +91,9 @@ PeriodicSenderHelper::InstallPriv (Ptr<Node> node) const
       double intervalProb = m_intervalProb->GetValue ();
       NS_LOG_DEBUG ("IntervalProb = " << intervalProb);
 
+      interval = Minutes(5) + Minutes(intervalProb * 60);
+      
+      /*
       // Based on TR 45.820
       if (intervalProb < 0.4)
         {
@@ -107,12 +110,14 @@ PeriodicSenderHelper::InstallPriv (Ptr<Node> node) const
       else
         {
           interval = Minutes (30);
-        }
+        }*/
     }
   else
     {
       interval = m_period;
     }
+
+    
 
   app->SetInterval (interval);
   NS_LOG_DEBUG ("Created an application with interval = " <<

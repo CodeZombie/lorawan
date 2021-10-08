@@ -29,7 +29,8 @@
 #include "ns3/lora-frame-header.h"          // RxParamSetupReq
 // #include "ns3/random-variable-stream.h"
 #include "ns3/lora-device-address.h"
-// #include "ns3/traced-value.h"
+#include "ns3/traced-value.h"
+#include "ns3/trace-source-accessor.h"
 
 namespace ns3 {
 namespace lorawan {
@@ -41,7 +42,7 @@ class TXParameterIndividual {
     int spreadingFactor;
     int bandwidth;
     int codingRate;
-    bool successful = true; //we assume its succesful until we actually try to use it.
+    int successful = -1; //-1 is untested. 0 is failed. 1 is success.
     
     TXParameterIndividual() {
       init();
@@ -50,7 +51,7 @@ class TXParameterIndividual {
       //power: 2, 4, 6, 8, 10, 12, 14, 16
       power = randomGenerator->GetInteger(1, 7) * 2; //8
       //bandwidth: 125000, 250000, 500000
-      int choice = randomGenerator->GetInteger(1, 3);
+      int choice = randomGenerator->GetInteger(1, 3); /// 2????
       if (choice == 1){
         bandwidth = 125000;
       }else if(choice == 2){
@@ -60,7 +61,14 @@ class TXParameterIndividual {
       }
       //coding rate: 1 (4/5), 2 (4/6), 3 (4/7), 4 (4/8)
       codingRate = randomGenerator->GetInteger(1, 4);
-      Print();
+    }
+
+    TXParameterIndividual(int sf, int pow, int bw, int cr ) {
+      init();
+      spreadingFactor = sf;
+      power = pow;
+      bandwidth = bw;
+      codingRate = cr;
     }
 
     TXParameterIndividual(TXParameterIndividual* parent_a, TXParameterIndividual* parent_b){
@@ -93,10 +101,59 @@ class TXParameterIndividual {
       }else{
         codingRate = parent_b->codingRate;
       }
+      /*
+      int mutate_probability = randomGenerator->GetInteger(1, 100);
+      if(mutate_probability > 50){
+        int mutate_choice = randomGenerator->GetInteger(0,3);
+        if(mutate_choice == 0){
+          //mutate SF
+          spreadingFactor = mutateValue(spreadingFactor, 1, 7, 12);
+        }else if(mutate_choice == 1){
+          //mutate power
+          power = mutateValue(power, 2, 2, 14);
+        }
+        else if(mutate_choice == 2){
+          //mutate cr
+          codingRate = mutateValue(codingRate, 1, 1, 4);
+        }else {
+          //mutate bw
+          if(bandwidth == 125000){
+            bandwidth *= 2;
+          }else if(bandwidth == 50000){
+            bandwidth /= 2;
+          }else { //bandwidth == 250000
+            int mutate_direction = randomGenerator->GetInteger(0, 1);
+            if(mutate_direction == 0){
+              bandwidth *= 2;
+            }else{
+              bandwidth /= 2;
+            }
+          }
+        }
+      }
+      */
+    }
 
-      int mutate_choice = randomGenerator->GetInteger(1, 100);
-      if(mutate_choice > 95){
-        //mutate, else do nothing.
+    int mutateValue(int originalValue, int delta, int min, int max){
+      /*
+          Mutates a value by shifting it up or down within a range.
+          params:
+          int originalValue: The original integer value to be mutated.
+          int delta: the size of the step, up or down, that the number will mutate by.
+          int min: the minimum value of the range that this method can return.
+          int max: the maximum value of the range this method can return.
+      */
+      if(originalValue == min){
+        return originalValue + delta;
+      }else if(originalValue == max){
+        return originalValue - delta;
+      }else{
+        int mutate_direction = randomGenerator->GetInteger(0, 1);
+        if(mutate_direction == 0){
+          return originalValue + delta;
+        }else{
+          return originalValue - delta;
+        }
       }
     }
 
@@ -105,7 +162,7 @@ class TXParameterIndividual {
     }
 
     void Print() {
-      std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << std::endl;
+      std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful << std::endl;
     }
 
     float fitness() {
@@ -113,7 +170,7 @@ class TXParameterIndividual {
       //lowest  = 0.0914286
       //highest = 87.3813
       //(v - lowest) / (highest - lowest)
-      return 1.0f - (powerConsumption() - 0.0914286) / (87.3813 - 0.0914286);
+      return 1.0f - (powerConsumption() - 0.0914286) / (87.3813 - 0.0914286);// - (-0.2 * (!succesful));
       //return powerConsumption();
     }
 
@@ -138,6 +195,8 @@ class TXParameterIndividual {
 class ClassAEndDeviceLorawanMac : public EndDeviceLorawanMac
 {
 public:
+
+
   static TypeId GetTypeId (void);
 
   ClassAEndDeviceLorawanMac ();
@@ -248,10 +307,6 @@ public:
    */
   double GetSecondReceiveWindowFrequency (void);
 
-  //CUSTOM MACHINE LEARNING MEMBERS:
-
-  bool UseMachineLearningOptimization;
-
   // Called when an acknowledgement is requested but none is recieved.
   void AckNotRecieved (void);
 
@@ -324,11 +379,16 @@ private:
    */
   uint8_t m_rx1DrOffset;
 
-  //The number of Unconfirmed messages we sent out.
-  uint8_t m_unconfirmedTransmissions;
+  //Genetic Algorithm variables.
   uint8_t m_ga_currentIndex;
-
   bool useGeneticParamaterSelection;
+  uint32_t maxNumberOfGenerations = 999999;
+  uint32_t currentNumberOfGenerations = 0;
+  TracedValue<float> m_lastFitnessLevel = 0;
+
+  TracedValue<uint32_t> m_numberOfFramesSent = 0;
+
+  TracedValue<uint32_t> m_FailedTransmissions = 0;
 
   TXParameterIndividual* population[16];
 }; /* ClassAEndDeviceLorawanMac */

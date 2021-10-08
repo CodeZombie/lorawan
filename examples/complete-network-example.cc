@@ -38,7 +38,7 @@ NS_LOG_COMPONENT_DEFINE ("ComplexLorawanNetworkExample");
 int nDevices = 200;
 int nGateways = 1;
 double radius = 6400; //Note that due to model updates, 7500 m is no longer the maximum distance 
-double simulationTime = 9000;
+double simulationTime = 600;
 
 // Channel model
 bool realisticChannelModel = true;
@@ -138,7 +138,6 @@ main (int argc, char *argv[])
 
   // Create the LorawanMacHelper
   LorawanMacHelper macHelper = LorawanMacHelper ();
-  //macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
 
   // Create the LoraHelper
   LoraHelper helper = LoraHelper ();
@@ -181,6 +180,7 @@ main (int argc, char *argv[])
   macHelper.SetAddressGenerator (addrGen);
   phyHelper.SetDeviceType (LoraPhyHelper::ED);
   macHelper.SetDeviceType (LorawanMacHelper::ED_A);
+  macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
   helper.Install (phyHelper, macHelper, endDevices);
 
   // Now end devices are connected to the channel
@@ -320,9 +320,7 @@ main (int argc, char *argv[])
 
   LoraPacketTracker &tracker = helper.GetPacketTracker ();
   std::cout << tracker.CountMacPacketsGlobally (Seconds (0), appStopTime + Hours (1)) << std::endl;
-  std::cout << std::endl << "Packets vs Ack:" << std::endl;
   std::cout << tracker.CountMacPacketsGloballyCpsr (Seconds (0), appStopTime + Hours (1)) << std::endl;
-  //std::cout << tracker.CountRetransmissions(Seconds (0), appStopTime + Hours (1)) << std::endl;
 
   return 0;
 }
