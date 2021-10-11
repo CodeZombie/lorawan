@@ -28,8 +28,12 @@ namespace lorawan {
                     DoubleValue value;
                     (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
                     (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
-                }else {
+                }else if((*attribute)->type == TracePrintAttributeTypes::Integer){
                     IntegerValue value;
+                    (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
+                    (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                }else if((*attribute)->type == TracePrintAttributeTypes::Uinteger){
+                    UintegerValue value;
                     (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
                     (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
                 }

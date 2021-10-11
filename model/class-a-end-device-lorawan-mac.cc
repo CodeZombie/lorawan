@@ -55,7 +55,12 @@ static TypeId tid = TypeId ("ns3::ClassAEndDeviceLorawanMac")
     "The fitness level of the last tx paramset used to tx.",
     DoubleValue(0),
     MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::m_lastFitnessLevel),
-    MakeDoubleChecker<float> ());
+    MakeDoubleChecker<float> ())
+  .AddAttribute("UseGeneticAlgorithm",
+    "Whether or not to use the Genetic Algorithm for tx param optimization.",
+    BooleanValue(true),
+    MakeBooleanAccessor(&ClassAEndDeviceLorawanMac::useGeneticParamaterSelection),
+    MakeBooleanChecker ());
 
 return tid;
 }
@@ -76,33 +81,29 @@ ClassAEndDeviceLorawanMac::ClassAEndDeviceLorawanMac () :
   m_closeSecondWindow.Cancel ();
   m_secondReceiveWindow = EventId ();
   m_secondReceiveWindow.Cancel ();
-  m_ga_currentIndex = 0;
-  useGeneticParamaterSelection = true;
 
-  if(useGeneticParamaterSelection) {
-    m_ga_currentIndex = 0; //the index of the current individual in the array being used to tx.
-    // this should create n individuals with ascending datarates/power
-    
-    /*for(int i = 0; i < 16; i++){
-      population[i] = new TXParameterIndividual();
-    }*/
-    population[0] = new TXParameterIndividual(7, 2, 125000, 1);
-    population[1] = new TXParameterIndividual(7, 14, 250000, 1);
-    population[2] = new TXParameterIndividual(8, 4, 125000, 1);
-    population[3] = new TXParameterIndividual(8, 12, 250000, 2);
-    population[4] = new TXParameterIndividual(9, 2, 125000, 1);
-    population[5] = new TXParameterIndividual(9, 10, 250000, 3);
-    population[6] = new TXParameterIndividual(10, 6, 125000, 2);
-    population[7] = new TXParameterIndividual(10, 14, 250000, 1);
-    population[8] = new TXParameterIndividual(11, 8, 125000, 2);
-    population[9] = new TXParameterIndividual(11, 2, 250000, 1);
-    population[10] = new TXParameterIndividual(12, 14, 125000, 2);
-    population[11] = new TXParameterIndividual(12, 2, 250000, 1);
-    population[12] = new TXParameterIndividual(7, 12, 125000, 4);
-    population[13] = new TXParameterIndividual(8, 4, 250000, 3);
-    population[14] = new TXParameterIndividual(9, 12, 125000, 4);
-    population[15] = new TXParameterIndividual(8, 8, 250000, 3);
-  }
+  m_ga_currentIndex = 0; //the index of the current individual in the array being used to tx.
+  // this should create n individuals with ascending datarates/power
+  
+  /*for(int i = 0; i < 16; i++){
+    population[i] = new TXParameterIndividual();
+  }*/
+  population[0] = new TXParameterIndividual(7, 2, 125000, 1);
+  population[1] = new TXParameterIndividual(7, 14, 250000, 1);
+  population[2] = new TXParameterIndividual(8, 4, 125000, 1);
+  population[3] = new TXParameterIndividual(8, 12, 250000, 2);
+  population[4] = new TXParameterIndividual(9, 2, 125000, 1);
+  population[5] = new TXParameterIndividual(9, 10, 250000, 3);
+  population[6] = new TXParameterIndividual(10, 6, 125000, 2);
+  population[7] = new TXParameterIndividual(10, 14, 250000, 1);
+  population[8] = new TXParameterIndividual(11, 8, 125000, 2);
+  population[9] = new TXParameterIndividual(11, 2, 250000, 1);
+  population[10] = new TXParameterIndividual(12, 14, 125000, 2);
+  population[11] = new TXParameterIndividual(12, 2, 250000, 1);
+  population[12] = new TXParameterIndividual(7, 12, 125000, 4);
+  population[13] = new TXParameterIndividual(8, 4, 250000, 3);
+  population[14] = new TXParameterIndividual(9, 12, 125000, 4);
+  population[15] = new TXParameterIndividual(8, 8, 250000, 3);
 }
 
 ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac ()

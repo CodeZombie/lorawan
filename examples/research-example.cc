@@ -31,10 +31,9 @@ using namespace lorawan;
 NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 
 const bool UseGeneticAlgorithm = true;
-
 Time simTime = Hours (1200);
 int NumberOfNodes = 4;
-Time transmitInterval = Hours(0); //forces it to choose randomly
+Time transmitInterval = Hours(0); //0 forces it to choose randomly
 
 bool adrEnabled = true;
 
@@ -62,8 +61,8 @@ int main (int argc, char *argv[])
   //LogComponentEnable ("OneShotSenderHelper", LOG_LEVEL_ALL);
   //LogComponentEnable ("OneShotSender", LOG_LEVEL_ALL);
   //LogComponentEnable ("LorawanMacHeader", LOG_LEVEL_ALL);
-    //LogComponentEnable ("LoraFrameHeader", LOG_LEVEL_ALL);
-    //LogComponentEnable ("LoraPacketTracker", LOG_LEVEL_ALL);
+  //LogComponentEnable ("LoraFrameHeader", LOG_LEVEL_ALL);
+  //LogComponentEnable ("LoraPacketTracker", LOG_LEVEL_ALL);
   
   LogComponentEnableAll (LOG_PREFIX_FUNC);
   LogComponentEnableAll (LOG_PREFIX_NODE);
@@ -73,15 +72,11 @@ int main (int argc, char *argv[])
   *  Create the channel  *
   ************************/
 
-  NS_LOG_INFO ("Creating the channel...");
-
   // Create the lora channel object
   Ptr<LogDistancePropagationLossModel> loss = CreateObject<LogDistancePropagationLossModel> ();
   loss->SetPathLossExponent (3.76);
   loss->SetReference (1, 7.7);
-
   Ptr<PropagationDelayModel> delay = CreateObject<ConstantSpeedPropagationDelayModel> ();
-
   Ptr<LoraChannel> channel = CreateObject<LoraChannel> (loss, delay);
 
   /************************
@@ -110,23 +105,19 @@ int main (int argc, char *argv[])
   LoraHelper helper = LoraHelper ();
   helper.EnablePacketTracking (); // Output filename
 
-
-//Create the NetworkServerHelper
+  //Create the NetworkServerHelper
   NetworkServerHelper nsHelper = NetworkServerHelper ();
-  nsHelper.EnableAdr (adrEnabled);
-  if(adrEnabled) {
-    nsHelper.SetAdr ("ns3::AdrComponent");
+  nsHelper.EnableAdr(!UseGeneticAlgorithm);
+  if(!UseGeneticAlgorithm) {
+    nsHelper.SetAdr("ns3::AdrComponent");
   }
   
-
   //Create the ForwarderHelper
   ForwarderHelper forHelper = ForwarderHelper ();
 
   /************************
   *  Create End Devices  *
   ************************/
-
-  NS_LOG_INFO ("Creating the end device...");
 
   // Create a set of nodes
   NodeContainer endDevices;
@@ -146,7 +137,7 @@ int main (int argc, char *argv[])
 
   tracePrintHelper = new TracePrintHelper("bad_", &endDevices, Hours(1));
   tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
-  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
+  tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
 
 
   //print end-device locations:
