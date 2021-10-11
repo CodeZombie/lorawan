@@ -24,6 +24,8 @@
 #include "ns3/config.h"
 #include "ns3/rectangle.h"
 #include "ns3/hex-grid-position-allocator.h"
+#include "ns3/trace-print-helper.h"
+
 
 using namespace ns3;
 using namespace lorawan;
@@ -44,8 +46,9 @@ int main (int argc, char *argv[])
 {
 
   bool verbose = false;
-  bool adrEnabled = true;
+  bool adrEnabled = false;
   bool initializeSF = false;
+  bool useGeneticAlgorithm = false;
   int nDevices = 400;
   int nPeriods = 20;
   double mobileNodeProbability = 0;
@@ -101,14 +104,14 @@ int main (int argc, char *argv[])
    // Logging
    //////////
 
-   LogComponentEnable ("AdrExample", LOG_LEVEL_ALL);
+   //LogComponentEnable ("AdrExample", LOG_LEVEL_ALL);
    // LogComponentEnable ("LoraPacketTracker", LOG_LEVEL_ALL);
    // LogComponentEnable ("NetworkServer", LOG_LEVEL_ALL);
    // LogComponentEnable ("NetworkController", LOG_LEVEL_ALL);
    // LogComponentEnable ("NetworkScheduler", LOG_LEVEL_ALL);
    // LogComponentEnable ("NetworkStatus", LOG_LEVEL_ALL);
    // LogComponentEnable ("EndDeviceStatus", LOG_LEVEL_ALL);
-   LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
+   //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
    // LogComponentEnable("ClassAEndDeviceLorawanMac", LOG_LEVEL_ALL);
    // LogComponentEnable ("LogicalLoraChannelHelper", LOG_LEVEL_ALL);
    // LogComponentEnable ("MacCommand", LOG_LEVEL_ALL);
@@ -174,6 +177,7 @@ int main (int argc, char *argv[])
 
    // Create the LorawanMacHelper
    LorawanMacHelper macHelper = LorawanMacHelper ();
+   
 
    // Create the LoraHelper
    LoraHelper helper = LoraHelper ();
@@ -197,6 +201,13 @@ int main (int argc, char *argv[])
 
    NodeContainer endDevices;
    endDevices.Create (nDevices);
+
+   //BEGIN: My stupid trace code:
+     TracePrintHelper* tracePrintHelper;
+    tracePrintHelper = new TracePrintHelper("dat_output/ADREXAMPLE_", &endDevices, Hours(1));
+    tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
+    //tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
+  ///END: my stupid trace code
 
    // Install mobility model on fixed nodes
    mobilityEd.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
@@ -228,6 +239,12 @@ int main (int argc, char *argv[])
   macHelper.SetDeviceType (LorawanMacHelper::ED_A);
   macHelper.SetAddressGenerator (addrGen);
   macHelper.SetRegion (LorawanMacHelper::EU);
+  //BEGIN: Lol disable these
+  if(useGeneticAlgorithm) {
+    macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
+    macHelper.Set("UseGeneticAlgorithm", BooleanValue(true));
+  }
+  //END: Lol disable these
   helper.Install (phyHelper, macHelper, endDevices);
 
   // Install applications in EDs

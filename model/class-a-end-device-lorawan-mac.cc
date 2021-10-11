@@ -526,28 +526,22 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
 void 
 ClassAEndDeviceLorawanMac::AckNotRecieved () 
 {
-  if(!useGeneticParamaterSelection) {
-    return;
-  }
-  //Get the active individual and mark is as NotRecieved.
-  //NS_LOG_DEBUG("ACK NOT RECIEVED! OH NOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-  population[m_ga_currentIndex]->successful = 0;
-  advanceGeneration();
   m_FailedTransmissions++;
-  //std::cout << "Failed TX: " << m_FailedTransmissions << std::endl;
+  if(useGeneticParamaterSelection) {
+    population[m_ga_currentIndex]->successful = 0;
+    advanceGeneration();
+  }
 }
 
 
 void
 ClassAEndDeviceLorawanMac::recievedAck () 
 {
-  if(!useGeneticParamaterSelection) {
-    return;
+  if(useGeneticParamaterSelection) {
+    population[m_ga_currentIndex]->successful = 1;
+    advanceGeneration();
   }
-  //Get the active individual and mark it as recieved.
-  //NS_LOG_LOGIC("RECIEVEIVIEIVIEIVIEVEIVIEVIEIVIEIVED ACK!!!!");
-  population[m_ga_currentIndex]->successful = 1;
-  advanceGeneration();
+  
 }
 
 int

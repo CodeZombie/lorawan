@@ -382,7 +382,7 @@ private:
   //Genetic Algorithm variables.
   uint8_t m_ga_currentIndex;
   bool useGeneticParamaterSelection;
-  uint32_t maxNumberOfGenerations = 999999;
+  uint32_t maxNumberOfGenerations = 999999; //TODO: figure out what you're doing with this.
   uint32_t currentNumberOfGenerations = 0;
   TracedValue<float> m_lastFitnessLevel = 0;
 

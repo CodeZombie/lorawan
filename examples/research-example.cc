@@ -1,6 +1,11 @@
 /*
  * This script simulates a simple network in which one end device sends one
  * packet to the gateway.
+ * 
+ * TODO:
+ * Implement Random Propagation Loss.
+ * Implement buildings.
+ * Print building and node locations to a dat file.
  */
 
 #include "ns3/end-device-lora-phy.h"
@@ -33,41 +38,22 @@ NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 /*******************************
              CONFIG            *
  ******************************/
-const bool UseGeneticAlgorithm = false;     //wether the MAC should use Genetic Algorithms or ADR.
-Time simTime = Hours (25);                  //How long the simulation should run for.
-int NumberOfNodes = 4;                      //The number of end-node devices in the network.
+//TODO: These should be modified by CMD so we can set up automation routines.
+
+const bool UseGeneticAlgorithm = true;     //wether the MAC should use Genetic Algorithms or ADR.
+Time simTime = Hours (60);                  //How long the simulation should run for.
+int NumberOfNodes = 24;                      //The number of end-node devices in the network.
 Time transmitInterval = Hours(0);           //How frequently end-nodes transmit. 0 = Random.
 Time dataCaptureInterval = Hours(1);        //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent";  //????????
+std::string outputFolder = "dat_output";    //Where output files (.dat) will be stored.
+double maxRandomLoss = 10;                  //The maximum amount of random loss that will be
+                                            //incurred by a transmission.
+double cityRadius = 3000;                  //Radius of the circular area end nodes are placed within.
 
 int main (int argc, char *argv[])
 {
-  //open trace files:
-  // Set up logging
-  //LogComponentEnable ("SimpleLorawanNetworkExample", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LoraChannel", LOG_LEVEL_INFO);
-  //LogComponentEnable ("LoraPhy", LOG_LEVEL_ALL);
-  //LogComponentEnable ("EndDeviceLoraPhy", LOG_LEVEL_ALL);
-  //LogComponentEnable ("GatewayLoraPhy", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LoraInterferenceHelper", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LorawanMac", LOG_LEVEL_ALL);
-  //LogComponentEnable ("EndDeviceLorawanMac", LOG_LEVEL_ALL);
-  //LogComponentEnable ("ClassAEndDeviceLorawanMac", LOG_LEVEL_ALL);
-  //LogComponentEnable ("GatewayLorawanMac", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LogicalLoraChannelHelper", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LogicalLoraChannel", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LoraHelper", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LoraPhyHelper", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LorawanMacHelper", LOG_LEVEL_ALL);
-  //LogComponentEnable ("OneShotSenderHelper", LOG_LEVEL_ALL);
-  //LogComponentEnable ("OneShotSender", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LorawanMacHeader", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LoraFrameHeader", LOG_LEVEL_ALL);
-  //LogComponentEnable ("LoraPacketTracker", LOG_LEVEL_ALL);
-  
-  LogComponentEnableAll (LOG_PREFIX_FUNC);
-  LogComponentEnableAll (LOG_PREFIX_NODE);
-  LogComponentEnableAll (LOG_PREFIX_TIME);
+  //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
 
   if(UseGeneticAlgorithm == false){ 
     Config::SetDefault ("ns3::EndDeviceLorawanMac::DRControl", BooleanValue (true));
@@ -77,10 +63,20 @@ int main (int argc, char *argv[])
   *  Create the channel  *
   ************************/
 
-  // Create the lora channel object
+  // Create the loss model.
   Ptr<LogDistancePropagationLossModel> loss = CreateObject<LogDistancePropagationLossModel> ();
   loss->SetPathLossExponent (3.76);
   loss->SetReference (1, 7.7);
+
+  //Add some random-loss to the model to simulate some real world interference.
+  Ptr<UniformRandomVariable> uniformRandom = CreateObject<UniformRandomVariable> ();
+  uniformRandom->SetAttribute ("Min", DoubleValue (0.0));
+  uniformRandom->SetAttribute ("Max", DoubleValue (maxRandomLoss));
+  Ptr<RandomPropagationLossModel> randomLoss = CreateObject<RandomPropagationLossModel> ();
+  randomLoss->SetAttribute ("Variable", PointerValue (uniformRandom));
+  loss->SetNext (randomLoss);
+  
+  //Create the channel from loss and delay.
   Ptr<PropagationDelayModel> delay = CreateObject<ConstantSpeedPropagationDelayModel> ();
   Ptr<LoraChannel> channel = CreateObject<LoraChannel> (loss, delay);
 
@@ -90,7 +86,6 @@ int main (int argc, char *argv[])
 
   NS_LOG_INFO ("Setting up helpers...");
 
-  TracePrintHelper* tracePrintHelper;
 
   MobilityHelper mobility;
   /*Ptr<ListPositionAllocator> allocator = CreateObject<ListPositionAllocator> ();
@@ -98,7 +93,8 @@ int main (int argc, char *argv[])
   allocator->Add (Vector (0,0,0));
   mobility.SetPositionAllocator (allocator);*/
   //2650
-  mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (100), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
+  mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (cityRadius), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
+
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 
   // Create the LoraPhyHelper
@@ -118,9 +114,6 @@ int main (int argc, char *argv[])
   if(!UseGeneticAlgorithm) {
     nsHelper.SetAdr(adrType);
   }
-  
-  //Create the ForwarderHelper
-  ForwarderHelper forHelper = ForwarderHelper ();
 
   /************************
   *  Create End Devices  *
@@ -141,117 +134,96 @@ int main (int argc, char *argv[])
   //TODO: Our genetic algo should eventually turn confirmation off.
   macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
 
+  if(!UseGeneticAlgorithm) {
+    macHelper.Set("EnableEDDataRateAdaptation", BooleanValue(true));
+  }
+
   //Enable/Disable the genetic algorithm within the MAC layer.
   macHelper.Set("UseGeneticAlgorithm", BooleanValue(UseGeneticAlgorithm));
 
   helper.Install (phyHelper, macHelper, endDevices);
 
+  TracePrintHelper* tracePrintHelper;
   if(UseGeneticAlgorithm) {
-    tracePrintHelper = new TracePrintHelper("GA_", &endDevices, dataCaptureInterval);
+    tracePrintHelper = new TracePrintHelper(outputFolder + "/GA_", &endDevices, dataCaptureInterval);
   }else{
-    tracePrintHelper = new TracePrintHelper("ADR_", &endDevices, dataCaptureInterval);
+    tracePrintHelper = new TracePrintHelper(outputFolder + "/ADR_", &endDevices, dataCaptureInterval);
   }
   tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
   tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
   tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, false);
 
-
-  //print end-device locations:
+  /******************************
+  * Print location of end node(s)
+  * *****************************/
   std::ofstream locationFile;
-  locationFile.open ("endDeviceLocations.txt");
-  for (NodeContainer::Iterator j = endDevices.Begin (); j != endDevices.End (); ++j)
-    {
-      Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel> ();
-      Vector position = mobility->GetPosition ();
-      locationFile << position.x << " " << position.y << std::endl;
-      
-    }
+  locationFile.open (outputFolder + "/endDeviceLocations.dat");
+  for (NodeContainer::Iterator j = endDevices.Begin (); j != endDevices.End (); ++j) {
+    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel> ();
+    Vector position = mobility->GetPosition ();
+    locationFile << position.x << " " << position.y << std::endl;
+  }
 
   /*********************
   *  Create Gateways  *
   *********************/
+  //Create mobility model for the gateway:
+  MobilityHelper gatewayMobility;
+  Ptr<ListPositionAllocator> gatewayAllocator = CreateObject<ListPositionAllocator> ();
+  gatewayAllocator->Add (Vector (0,0,0)); //repeat this line to add more values to the list.
+  gatewayMobility.SetPositionAllocator (gatewayAllocator);
 
-  NS_LOG_INFO ("Creating the gateway...");
   NodeContainer gateways;
   gateways.Create (1);
-
-  mobility.Install (gateways);
+  gatewayMobility.Install (gateways);
 
   // Create a netdevice for each gateway
   phyHelper.SetDeviceType (LoraPhyHelper::GW);
   macHelper.SetDeviceType (LorawanMacHelper::GW);
   helper.Install (phyHelper, macHelper, gateways);
 
-    //print end-device locations:
+  /**************************
+   * Print location of gateway node(s)
+   * ************************/
   std::ofstream gwlocationFile;
-  gwlocationFile.open ("gatewayLocations.txt");
-  for (NodeContainer::Iterator j = gateways.Begin (); j != gateways.End (); ++j)
-    {
-      Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel> ();
-      Vector position = mobility->GetPosition ();
-      gwlocationFile << position.x << " " << position.y << std::endl;
-    }
-
-
-///////////// Enable periodic phy output to file
-//helper.EnablePeriodicPhyPerformancePrinting(gateways, "PeriodicPhyPerformance.txt", Seconds(60));
+  gwlocationFile.open (outputFolder + "/gatewayLocations.dat");
+  for (NodeContainer::Iterator j = gateways.Begin (); j != gateways.End (); ++j) {
+    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel> ();
+    Vector position = mobility->GetPosition ();
+    gwlocationFile << position.x << " " << position.y << std::endl;
+  }
 
   /*********************************************
   *  Install applications on the end devices  *
   *********************************************/
-/*
-  OneShotSenderHelper oneShotSenderHelper;
-  oneShotSenderHelper.SetSendTime (Seconds (2));
-
-  oneShotSenderHelper.Install (endDevices);
-*/
-
   PeriodicSenderHelper appHelper = PeriodicSenderHelper ();
   appHelper.SetPeriod (transmitInterval);
   appHelper.SetPacketSize (23);
-  Ptr<RandomVariableStream> rv = CreateObjectWithAttributes<UniformRandomVariable> ("Min", DoubleValue (0), "Max", DoubleValue (10));
   ApplicationContainer appContainer = appHelper.Install (endDevices);
   appContainer.Start (Seconds (0));
   appContainer.Stop (simTime);
-  /******************
-   * Set Data Rates *
-   ******************/
-  //std::vector<int> sfQuantity (6);
-  //sfQuantity = macHelper.SetSpreadingFactorsUp (endDevices, gateways, channel);
-  
 
   /**************************
    *  Create Network Server  *
    ***************************/
-
-  // Create the NS node
   NodeContainer networkServer;
   networkServer.Create (1);
-
-  // Create a NS for the network
   nsHelper.SetEndDevices (endDevices);
   nsHelper.SetGateways (gateways);
   nsHelper.Install (networkServer);
 
-  //Create a forwarder for each gateway
+  ForwarderHelper forHelper = ForwarderHelper ();
   forHelper.Install (gateways);
 
   /****************
   *  Simulation  *
   ****************/
-  
   Simulator::Stop (simTime);
-
-  //Simulator::Schedule(Hours(0.25), &intervalMethod, &endDevices);
-
   Simulator::Run ();
-  //lper.DoPrintDeviceStatus (endDevices, gateways, "DeviceStatus_COOL.txt");
   Simulator::Destroy ();
-
   LoraPacketTracker &tracker = helper.GetPacketTracker ();
   std::cout << tracker.CountMacPacketsGlobally(Seconds(0), simTime + Hours(1)) << std::endl;
   std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), simTime + Hours(1)) << std::endl;
-
 
   return 0;
 }
