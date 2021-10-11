@@ -12,7 +12,7 @@
 
 namespace ns3 {
 namespace lorawan {
-enum TracePrintAttributeTypes { Double, Integer, Uinteger };
+enum TracePrintAttributeTypes { Double, Integer, Uinteger, Boolean };
 
 class TracePrintAttribute {
     public:

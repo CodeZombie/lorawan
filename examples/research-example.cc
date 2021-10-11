@@ -30,14 +30,15 @@ using namespace lorawan;
 
 NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 
-const bool UseGeneticAlgorithm = true;
-Time simTime = Hours (1200);
-int NumberOfNodes = 4;
-Time transmitInterval = Hours(0); //0 forces it to choose randomly
-
-bool adrEnabled = true;
-
-TracePrintHelper* tracePrintHelper;
+/*******************************
+             CONFIG            *
+ ******************************/
+const bool UseGeneticAlgorithm = false;     //wether the MAC should use Genetic Algorithms or ADR.
+Time simTime = Hours (25);                  //How long the simulation should run for.
+int NumberOfNodes = 4;                      //The number of end-node devices in the network.
+Time transmitInterval = Hours(0);           //How frequently end-nodes transmit. 0 = Random.
+Time dataCaptureInterval = Hours(1);        //The time in between data sampling.
+std::string adrType = "ns3::AdrComponent";  //????????
 
 int main (int argc, char *argv[])
 {
@@ -68,6 +69,10 @@ int main (int argc, char *argv[])
   LogComponentEnableAll (LOG_PREFIX_NODE);
   LogComponentEnableAll (LOG_PREFIX_TIME);
 
+  if(UseGeneticAlgorithm == false){ 
+    Config::SetDefault ("ns3::EndDeviceLorawanMac::DRControl", BooleanValue (true));
+  }
+
   /************************
   *  Create the channel  *
   ************************/
@@ -84,6 +89,8 @@ int main (int argc, char *argv[])
   ************************/
 
   NS_LOG_INFO ("Setting up helpers...");
+
+  TracePrintHelper* tracePrintHelper;
 
   MobilityHelper mobility;
   /*Ptr<ListPositionAllocator> allocator = CreateObject<ListPositionAllocator> ();
@@ -109,7 +116,7 @@ int main (int argc, char *argv[])
   NetworkServerHelper nsHelper = NetworkServerHelper ();
   nsHelper.EnableAdr(!UseGeneticAlgorithm);
   if(!UseGeneticAlgorithm) {
-    nsHelper.SetAdr("ns3::AdrComponent");
+    nsHelper.SetAdr(adrType);
   }
   
   //Create the ForwarderHelper
@@ -131,13 +138,22 @@ int main (int argc, char *argv[])
   phyHelper.SetDeviceType (LoraPhyHelper::ED);
   macHelper.SetDeviceType (LorawanMacHelper::ED_A);
 
+  //TODO: Our genetic algo should eventually turn confirmation off.
   macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
+
+  //Enable/Disable the genetic algorithm within the MAC layer.
+  macHelper.Set("UseGeneticAlgorithm", BooleanValue(UseGeneticAlgorithm));
 
   helper.Install (phyHelper, macHelper, endDevices);
 
-  tracePrintHelper = new TracePrintHelper("bad_", &endDevices, Hours(1));
+  if(UseGeneticAlgorithm) {
+    tracePrintHelper = new TracePrintHelper("GA_", &endDevices, dataCaptureInterval);
+  }else{
+    tracePrintHelper = new TracePrintHelper("ADR_", &endDevices, dataCaptureInterval);
+  }
   tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
   tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
+  tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, false);
 
 
   //print end-device locations:

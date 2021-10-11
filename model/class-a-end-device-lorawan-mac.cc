@@ -58,7 +58,7 @@ static TypeId tid = TypeId ("ns3::ClassAEndDeviceLorawanMac")
     MakeDoubleChecker<float> ())
   .AddAttribute("UseGeneticAlgorithm",
     "Whether or not to use the Genetic Algorithm for tx param optimization.",
-    BooleanValue(true),
+    BooleanValue(false),
     MakeBooleanAccessor(&ClassAEndDeviceLorawanMac::useGeneticParamaterSelection),
     MakeBooleanChecker ());
 
