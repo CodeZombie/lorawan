@@ -19,6 +19,8 @@
 #include "ns3/network-server-helper.h"
 #include "ns3/forwarder-helper.h"
 
+#include "ns3/trace-print-helper.h"
+
 #include "ns3/command-line.h"
 #include <algorithm>
 #include <ctime>
@@ -28,45 +30,19 @@ using namespace lorawan;
 
 NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 
+const bool UseGeneticAlgorithm = true;
+
 Time simTime = Hours (1200);
 int NumberOfNodes = 4;
 Time transmitInterval = Hours(0); //forces it to choose randomly
 
 bool adrEnabled = true;
 
-std::ofstream fitnessOverTimeTraceFile;
-std::ofstream TransmissionCountFile;
-std::ofstream FailedTransmissionCountFile;
-/* Keep track of global NACK'd txs */
-void FrameSentCallback(uint32_t oldval, uint32_t newval) {
-  //failedTransmissions++;
-  TransmissionCountFile << ns3::Simulator::Now().GetHours() << " " << newval << std::endl;
-}
-
-void intervalMethod(NodeContainer *endDevices) {
-  for (NodeContainer::Iterator j = endDevices->Begin (); j != endDevices->End (); ++j)
-    {
-        DoubleValue val;
-        (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute("LastFitnessLevel", val); 
-        fitnessOverTimeTraceFile << ns3::Simulator::Now().GetHours() << " " << val.Get() << std::endl;
-
-
-        IntegerValue failedTransmissionsValue;
-        (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute("FailedTransmissionCount", failedTransmissionsValue); 
-        FailedTransmissionCountFile << ns3::Simulator::Now().GetHours() << " " << failedTransmissionsValue.Get() << std::endl;
-    }
-
-  Simulator::Schedule(Hours(0.25), &intervalMethod, endDevices);
-}
-
+TracePrintHelper* tracePrintHelper;
 
 int main (int argc, char *argv[])
 {
   //open trace files:
-  fitnessOverTimeTraceFile.open ("fitnessOverTime.txt");
-  TransmissionCountFile.open("TransmissionCount.txt");
-  FailedTransmissionCountFile.open("FailedTransmissionCount.txt");
-
   // Set up logging
   //LogComponentEnable ("SimpleLorawanNetworkExample", LOG_LEVEL_ALL);
   //LogComponentEnable ("LoraChannel", LOG_LEVEL_INFO);
@@ -168,6 +144,10 @@ int main (int argc, char *argv[])
 
   helper.Install (phyHelper, macHelper, endDevices);
 
+  tracePrintHelper = new TracePrintHelper("bad_", &endDevices, Hours(1));
+  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
+  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
+
 
   //print end-device locations:
   std::ofstream locationFile;
@@ -178,8 +158,6 @@ int main (int argc, char *argv[])
       Vector position = mobility->GetPosition ();
       locationFile << position.x << " " << position.y << std::endl;
       
-      //connect a trace :)
-      (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->TraceConnectWithoutContext ("NumberOfFramesSent", MakeCallback(&FrameSentCallback));
     }
 
   /*********************
@@ -257,7 +235,7 @@ int main (int argc, char *argv[])
   
   Simulator::Stop (simTime);
 
-  Simulator::Schedule(Hours(0.25), &intervalMethod, &endDevices);
+  //Simulator::Schedule(Hours(0.25), &intervalMethod, &endDevices);
 
   Simulator::Run ();
   //lper.DoPrintDeviceStatus (endDevices, gateways, "DeviceStatus_COOL.txt");
