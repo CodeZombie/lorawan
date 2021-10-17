@@ -48,13 +48,13 @@ int main (int argc, char *argv[])
   bool verbose = false;
   bool adrEnabled = false;
   bool initializeSF = false;
-  bool useGeneticAlgorithm = false;
-  int nDevices = 400;
-  int nPeriods = 20;
+  bool useGeneticAlgorithm = true;
+  int nDevices = 24;
+  int nPeriods = 512;
   double mobileNodeProbability = 0;
   double sideLength = 10000;
   int gatewayDistance = 5000;
-  double maxRandomLoss = 10;
+  double maxRandomLoss = 5;
   double minSpeed = 2;
   double maxSpeed = 16;
   std::string adrType = "ns3::AdrComponent";
@@ -204,8 +204,8 @@ int main (int argc, char *argv[])
 
    //BEGIN: My stupid trace code:
      TracePrintHelper* tracePrintHelper;
-    tracePrintHelper = new TracePrintHelper("dat_output/ADREXAMPLE_", &endDevices, Hours(1));
-    tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
+    tracePrintHelper = new TracePrintHelper("dat_output/ADREXAMPLE_", &endDevices, Minutes(20));
+    tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, false);
     //tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
   ///END: my stupid trace code
 
@@ -240,8 +240,8 @@ int main (int argc, char *argv[])
   macHelper.SetAddressGenerator (addrGen);
   macHelper.SetRegion (LorawanMacHelper::EU);
   //BEGIN: Lol disable these
+  macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
   if(useGeneticAlgorithm) {
-    macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
     macHelper.Set("UseGeneticAlgorithm", BooleanValue(true));
   }
   //END: Lol disable these

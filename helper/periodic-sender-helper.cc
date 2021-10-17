@@ -91,7 +91,7 @@ PeriodicSenderHelper::InstallPriv (Ptr<Node> node) const
       double intervalProb = m_intervalProb->GetValue ();
       NS_LOG_DEBUG ("IntervalProb = " << intervalProb);
 
-      interval = Minutes(5) + Minutes(intervalProb * 60);
+      interval = Minutes(30) + Minutes(intervalProb * 120);
       
       /*
       // Based on TR 45.820

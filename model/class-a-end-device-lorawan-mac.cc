@@ -44,12 +44,12 @@ static TypeId tid = TypeId ("ns3::ClassAEndDeviceLorawanMac")
   .AddConstructor<ClassAEndDeviceLorawanMac> ()
   .AddTraceSource ("NumberOfFramesSent",
     "The number of Frames sent from this node.",
-    MakeTraceSourceAccessor (&ClassAEndDeviceLorawanMac::m_numberOfFramesSent),
+    MakeTraceSourceAccessor (&ClassAEndDeviceLorawanMac::TransmissionsSent),
     "ns3::TracedValueCallback::Int32")
   .AddAttribute("FailedTransmissionCount",
       "The number of transmissions that didn't get an ACK.",
       DoubleValue (0),
-      MakeIntegerAccessor (&ClassAEndDeviceLorawanMac::m_FailedTransmissions),
+      MakeIntegerAccessor (&ClassAEndDeviceLorawanMac::UnacknowledgedTransmissions),
       MakeIntegerChecker<uint32_t> ())
   .AddAttribute("LastFitnessLevel", 
     "The fitness level of the last tx paramset used to tx.",
@@ -60,7 +60,12 @@ static TypeId tid = TypeId ("ns3::ClassAEndDeviceLorawanMac")
     "Whether or not to use the Genetic Algorithm for tx param optimization.",
     BooleanValue(false),
     MakeBooleanAccessor(&ClassAEndDeviceLorawanMac::useGeneticParamaterSelection),
-    MakeBooleanChecker ());
+    MakeBooleanChecker ())
+  .AddAttribute("PacketErrorRate",
+    "The factor of packets that are NOT acknowledged vs number of packets sent out.",
+    DoubleValue(false),
+    MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::PacketErrorRate),
+    MakeDoubleChecker<float> ());
 
 return tid;
 }
@@ -82,28 +87,7 @@ ClassAEndDeviceLorawanMac::ClassAEndDeviceLorawanMac () :
   m_secondReceiveWindow = EventId ();
   m_secondReceiveWindow.Cancel ();
 
-  m_ga_currentIndex = 0; //the index of the current individual in the array being used to tx.
-  // this should create n individuals with ascending datarates/power
-  
-  /*for(int i = 0; i < 16; i++){
-    population[i] = new TXParameterIndividual();
-  }*/
-  population[0] = new TXParameterIndividual(7, 2, 125000, 1);
-  population[1] = new TXParameterIndividual(7, 14, 250000, 1);
-  population[2] = new TXParameterIndividual(8, 4, 125000, 1);
-  population[3] = new TXParameterIndividual(8, 12, 250000, 2);
-  population[4] = new TXParameterIndividual(9, 2, 125000, 1);
-  population[5] = new TXParameterIndividual(9, 10, 250000, 3);
-  population[6] = new TXParameterIndividual(10, 6, 125000, 2);
-  population[7] = new TXParameterIndividual(10, 14, 250000, 1);
-  population[8] = new TXParameterIndividual(11, 8, 125000, 2);
-  population[9] = new TXParameterIndividual(11, 2, 250000, 1);
-  population[10] = new TXParameterIndividual(12, 14, 125000, 2);
-  population[11] = new TXParameterIndividual(12, 2, 250000, 1);
-  population[12] = new TXParameterIndividual(7, 12, 125000, 4);
-  population[13] = new TXParameterIndividual(8, 4, 250000, 3);
-  population[14] = new TXParameterIndividual(9, 12, 125000, 4);
-  population[15] = new TXParameterIndividual(8, 8, 250000, 3);
+  geneticTXParameterOptimizer = new GeneticTXParameterOptimizer();
 }
 
 ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac ()
@@ -118,7 +102,9 @@ ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac ()
 void
 ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
 {
-  m_numberOfFramesSent++;
+  TransmissionsSent++;
+  PacketErrorRate = static_cast<float>(UnacknowledgedTransmissions) / static_cast<float>(TransmissionsSent);
+
   /////////////////////////////////////////////////////////
   // Add headers, prepare TX parameters and send the packet
   /////////////////////////////////////////////////////////
@@ -138,18 +124,19 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
     {
       m_txPower = 14; // Reset transmission power
       m_dataRate = m_dataRate - 1;
+      std::cout << "m_enableDRAdapt" << std::endl;
     }
-  
-  m_lastFitnessLevel = population[0]->fitness();
 
   // Craft LoraTxParameters object
   LoraTxParameters params;
 
   if(useGeneticParamaterSelection){
-    m_txPower = population[m_ga_currentIndex]->power;
-    params.sf = population[m_ga_currentIndex]->spreadingFactor;
-    params.codingRate = population[m_ga_currentIndex]->codingRate;
-    params.bandwidthHz = population[m_ga_currentIndex]->bandwidth;
+    m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
+
+    m_txPower = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->power;
+    params.sf = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->spreadingFactor;
+    params.codingRate = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->codingRate;
+    params.bandwidthHz = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->bandwidth;
     //manually set the datarate:
     if(params.sf == 12) { m_dataRate = 0; }
     if(params.sf == 11) { m_dataRate = 1; }
@@ -158,11 +145,11 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
     if(params.sf == 8) { m_dataRate = 4; }
     if(params.sf == 7 && params.bandwidthHz == 125000) { m_dataRate = 5; }
     if(params.sf == 7 && params.bandwidthHz == 250000) { m_dataRate = 6; }
-    
   }else{
     params.sf = GetSfFromDataRate (m_dataRate);
     params.codingRate = m_codingRate;
     params.bandwidthHz = GetBandwidthFromDataRate (m_dataRate);
+    m_lastFitnessLevel = TransmissionParameterSet::fitness(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
   }
 
   params.headerDisabled = m_headerDisabled;
@@ -526,103 +513,19 @@ ClassAEndDeviceLorawanMac::CloseSecondReceiveWindow (void)
 void 
 ClassAEndDeviceLorawanMac::AckNotRecieved () 
 {
-  m_FailedTransmissions++;
+  UnacknowledgedTransmissions++;
+  PacketErrorRate = static_cast<float>(UnacknowledgedTransmissions) / static_cast<float>(TransmissionsSent);
+
   if(useGeneticParamaterSelection) {
-    population[m_ga_currentIndex]->successful = 0;
-    advanceGeneration();
+    geneticTXParameterOptimizer->SetCurrentTransmissionParameterSetSuccess(false);
   }
 }
-
 
 void
 ClassAEndDeviceLorawanMac::recievedAck () 
 {
   if(useGeneticParamaterSelection) {
-    population[m_ga_currentIndex]->successful = 1;
-    advanceGeneration();
-  }
-  
-}
-
-int
-ClassAEndDeviceLorawanMac::getIndexOfFittestIndividual() 
-{
-  int fittestIndex = -1;
-  for(int i = 0; i<16; i++){
-    if(population[i] == NULL){
-      continue;
-    }
-    if(population[i]->successful == 0){
-      continue;
-    }
-    if(fittestIndex == -1 || population[i]->fitness() > population[fittestIndex]->fitness()){
-      fittestIndex = i;
-    }
-  }
-  
-  return fittestIndex;
-}
-
-void
-ClassAEndDeviceLorawanMac::advanceGeneration()
-{
-  if(currentNumberOfGenerations >= maxNumberOfGenerations){
-    m_ga_currentIndex = 0;
-    return;
-  }
-
-  //currentNumberOfGenerations++;
-
-  if(!useGeneticParamaterSelection) {
-    return;
-  }
-  //population[m_ga_currentIndex]->Print();
-  //NS_LOG_LOGIC("Advancing to the next individual in the population: " << m_ga_currentIndex);
-  //std::cout << +m_ga_currentIndex << std::endl;
-  if(m_ga_currentIndex < 15){
-    m_ga_currentIndex++;
-  }else{
-    //std::cout << "Generating a new population" << std::endl;
-    //generate new paramaters
-    //NS_LOG_LOGIC("Generating a new population.");
-    m_ga_currentIndex = 0;
-    //Get all succesful individuals and sort them from most fit to least.
-    //Take the top 4, generating new random ones if there are not 4 (NOTE: weighted toward being longer range)
-
-    //NS_LOG_LOGIC("Finding the top 4 fittest individuals");
-    //Find the top 4 fittest individuals. 
-    TXParameterIndividual* fitpop[4]; 
-    for(int i = 0; i < 4; i++){
-      int fittestIndex = getIndexOfFittestIndividual();
-      if(fittestIndex == -1){ //if no fittest was found, generate a new one randomly.
-      //NOTE: we want to insert some bias here toward more energy-intensive settings as if we get here it means
-      //  we probably need stronger settings.
-        fitpop[i] = new TXParameterIndividual();
-      }else{
-        fitpop[i] = population[fittestIndex];
-        population[fittestIndex] = NULL;
-      }
-    }
-  //NS_LOG_LOGIC("Deleting all remaining objects");
-    //delete all remaining unfit/unsuccesful objects from population.
-    for(int i = 0; i < 16; i++){
-      if(population[i] != NULL){
-        delete population[i];
-      }
-    }
-
-    //create a new population by combining the 4 fit individuals.
-    for(int x = 0; x < 4; x++){
-      for(int y = 0; y < 4; y++){
-        population[(y*4) + x] = new TXParameterIndividual(fitpop[x], fitpop[y]);
-      }
-    }
-
-    //delete all objects from fitpop.
-    for(int i = 0; i < 4; i++){
-      delete fitpop[i];
-    }
-
+    geneticTXParameterOptimizer->SetCurrentTransmissionParameterSetSuccess(true);
   }
 }
 

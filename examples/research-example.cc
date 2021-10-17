@@ -41,10 +41,10 @@ NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 //TODO: These should be modified by CMD so we can set up automation routines.
 
 const bool UseGeneticAlgorithm = true;     //wether the MAC should use Genetic Algorithms or ADR.
-Time simTime = Hours (60);                  //How long the simulation should run for.
-int NumberOfNodes = 24;                      //The number of end-node devices in the network.
+Time simTime = Hours (256);                  //How long the simulation should run for.
+int NumberOfNodes = 1;                      //The number of end-node devices in the network.
 Time transmitInterval = Hours(0);           //How frequently end-nodes transmit. 0 = Random.
-Time dataCaptureInterval = Hours(1);        //The time in between data sampling.
+Time dataCaptureInterval = Minutes(32);        //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent";  //????????
 std::string outputFolder = "dat_output";    //Where output files (.dat) will be stored.
 double maxRandomLoss = 10;                  //The maximum amount of random loss that will be
@@ -54,6 +54,7 @@ double cityRadius = 3000;                  //Radius of the circular area end nod
 int main (int argc, char *argv[])
 {
   //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
+  LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
 
   if(UseGeneticAlgorithm == false){ 
     Config::SetDefault ("ns3::EndDeviceLorawanMac::DRControl", BooleanValue (true));
@@ -152,6 +153,9 @@ int main (int argc, char *argv[])
   tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
   tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
   tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, false);
+  tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, false);
+  tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, false);
+  
 
   /******************************
   * Print location of end node(s)
