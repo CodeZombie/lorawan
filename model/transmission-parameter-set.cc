@@ -4,6 +4,9 @@ namespace ns3
 {
     namespace lorawan
     {
+        
+        NS_LOG_COMPONENT_DEFINE("TransmissionParameterSet");
+
         TransmissionParameterSet::TransmissionParameterSet()
         {
             initializeRNG();
@@ -192,7 +195,7 @@ namespace ns3
 
         void TransmissionParameterSet::Print()
         {
-            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful << std::endl;
+            NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
         }
 
         float TransmissionParameterSet::fitness()

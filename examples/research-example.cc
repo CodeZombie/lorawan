@@ -41,10 +41,10 @@ NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
 //TODO: These should be modified by CMD so we can set up automation routines.
 //TODO: Add some Genetic Algorithm parameter customization options here. (Population size, mutation rate, etc)
 
-const bool UseGeneticAlgorithm = true;        //whether the MAC should use Genetic Algorithms or ADR.
-Time simTime = Hours (200);                   //How long the simulation should run for.
-int NumberOfNodes = 1;                        //The number of end-node devices in the network.
-Time transmitInterval = Hours(1);             //How frequently end-nodes transmit. 0 = Random.
+const bool UseGeneticAlgorithm = false;        //whether the MAC should use Genetic Algorithms or ADR.
+Time simTime = Hours (10);                   //How long the simulation should run for.
+int NumberOfNodes = 390;                        //The number of end-node devices in the network.
+Time transmitInterval = Hours(0);             //How frequently end-nodes transmit. 0 = Random.
 Time dataCaptureInterval = Minutes(32);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent";    //????????
 std::string outputFolder = "dat_output";      //Where output files (.dat) will be stored.
@@ -55,16 +55,26 @@ double cityRadius = 6000;                     //Radius of the circular area end 
 
 int main (int argc, char *argv[])
 {
-  CommandLine cmd;
+  
+  /*****************************
+   ****** COMMAND LINE *********
+   ****************************/
+  /*CommandLine cmd;
   cmd.AddValue ("nodes", "Number of end nodes to include in the simulation", NumberOfNodes);
   cmd.AddValue ("genetic", "Whether to use the genetic algorithm or ADR algorithm", UseGeneticAlgorithm);
   cmd.AddValue ("randomloss", "The amount of random loss (noise) for signals.", maxRandomLoss);
   cmd.AddValue ("cityradius", "The size of the circular city environment.", cityRadius);
-  cmd.Parse(argc, argv);
+  cmd.Parse(argc, argv);*/
 
 
+
+  /*****************************
+   ******** LOGGING ************
+   ****************************/
   //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
-  LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
+  //LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
+
+
 
   if(UseGeneticAlgorithm == false){ 
     Config::SetDefault ("ns3::EndDeviceLorawanMac::DRControl", BooleanValue (true));
@@ -97,10 +107,10 @@ int main (int argc, char *argv[])
 
   NS_LOG_INFO ("Setting up helpers...");
 
-
   MobilityHelper mobility;
   Ptr<ListPositionAllocator> allocator = CreateObject<ListPositionAllocator> ();
-  allocator->Add (Vector (3000,0,0));
+  allocator->Add("node_locations.dat");
+  //allocator->Add (Vector (3000,0,0));
   mobility.SetPositionAllocator (allocator);
   //2650
   //mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (cityRadius), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
