@@ -17,6 +17,7 @@ namespace ns3
         {
         public:
             GeneticTXParameterOptimizer();
+            int GetSuccesfulParameterSets();
             TransmissionParameterSet *GetCurrentTransmissionParameterSet();
             void SetCurrentTransmissionParameterSetSuccess(bool successful);
 
@@ -25,6 +26,7 @@ namespace ns3
             int GetIndexOfFittestTPSInPopulation();
             TransmissionParameterSet *tpsPopulation[GENETIC_OPTIMIZER_POPULATION_SIZE];
             int currentTPSIndex = 0;
+            Ptr<UniformRandomVariable> randomGenerator;
         };
     }
 }

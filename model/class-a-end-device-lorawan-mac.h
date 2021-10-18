@@ -234,6 +234,10 @@ private:
   TracedValue<double> PacketErrorRate = 0;
   
   GeneticTXParameterOptimizer* geneticTXParameterOptimizer;
+
+  //this keeps track of the last transmission parameters for logging.
+  LoraTxParameters lastParams;
+
 }; /* ClassAEndDeviceLorawanMac */
 } /* namespace lorawan */
 } /* namespace ns3 */

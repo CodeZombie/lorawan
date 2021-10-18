@@ -157,6 +157,10 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
   params.crcEnabled = 1;
   params.lowDataRateOptimizationEnabled = LoraPhy::GetTSym (params) > MilliSeconds (16) ? true : false;
 
+  lastParams.sf = params.sf;
+  lastParams.codingRate = params.codingRate;
+  lastParams.bandwidthHz = params.bandwidthHz;
+
   // Wake up PHY layer and directly send the packet
 
   Ptr<LogicalLoraChannel> txChannel = GetChannelForTx ();
@@ -184,10 +188,9 @@ ClassAEndDeviceLorawanMac::SendToPhy (Ptr<Packet> packetToSend)
   // Instruct the PHY on the right Spreading Factor to listen for during the window
   // create a SetReplyDataRate function?
   uint8_t replyDataRate = GetFirstReceiveWindowDataRate ();
-  //NS_LOG_DEBUG ("m_dataRate: " << unsigned (m_dataRate) << ", m_rx1DrOffset: " << unsigned (m_rx1DrOffset) << ", replyDataRate: " << unsigned (replyDataRate) << ".");
+  std::cout << "m_dataRate: " << unsigned (m_dataRate) << ", m_rx1DrOffset: " << unsigned (m_rx1DrOffset) << ", replyDataRate: " << unsigned (replyDataRate) << "." << std::endl;
 
-  m_phy->GetObject<EndDeviceLoraPhy> ()->SetSpreadingFactor
-    (GetSfFromDataRate (replyDataRate));
+  m_phy->GetObject<EndDeviceLoraPhy> ()->SetSpreadingFactor(GetSfFromDataRate (replyDataRate));
 
 }
 
@@ -525,7 +528,10 @@ void
 ClassAEndDeviceLorawanMac::recievedAck () 
 {
   if(useGeneticParamaterSelection) {
+    std::cout << "Successfully Recieved Ack from Transmission with fitness: " << geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness() << std::endl;
     geneticTXParameterOptimizer->SetCurrentTransmissionParameterSetSuccess(true);
+  }else{
+    std::cout << "Successfully Recieved Ack from Transmission with fitness: " << TransmissionParameterSet::fitness(lastParams.sf, lastParams.bandwidthHz, lastParams.codingRate, m_txPower) << std::endl;
   }
 }
 

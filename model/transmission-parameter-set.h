@@ -13,18 +13,14 @@ namespace ns3
         {
         public:
             TransmissionParameterSet();
-
             TransmissionParameterSet(int sf, int pow, int bw, int cr);
-
             TransmissionParameterSet(TransmissionParameterSet *parent_a, TransmissionParameterSet *parent_b);
 
             int mutateValue(int originalValue, int delta, int min, int max);
-
             void Print();
-
             float fitness();
-
-            int datarate();
+            bool isEqual(TransmissionParameterSet *other);
+            int dataRate();
 
             static float fitness(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power);
 

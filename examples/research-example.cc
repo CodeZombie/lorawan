@@ -39,20 +39,30 @@ NS_LOG_COMPONENT_DEFINE ("SimpleLorawanNetworkExample");
              CONFIG            *
  ******************************/
 //TODO: These should be modified by CMD so we can set up automation routines.
+//TODO: Add some Genetic Algorithm parameter customization options here. (Population size, mutation rate, etc)
 
-const bool UseGeneticAlgorithm = true;     //wether the MAC should use Genetic Algorithms or ADR.
-Time simTime = Hours (256);                  //How long the simulation should run for.
-int NumberOfNodes = 1;                      //The number of end-node devices in the network.
-Time transmitInterval = Hours(0);           //How frequently end-nodes transmit. 0 = Random.
-Time dataCaptureInterval = Minutes(32);        //The time in between data sampling.
-std::string adrType = "ns3::AdrComponent";  //????????
-std::string outputFolder = "dat_output";    //Where output files (.dat) will be stored.
-double maxRandomLoss = 10;                  //The maximum amount of random loss that will be
-                                            //incurred by a transmission.
-double cityRadius = 3000;                  //Radius of the circular area end nodes are placed within.
+const bool UseGeneticAlgorithm = true;        //whether the MAC should use Genetic Algorithms or ADR.
+Time simTime = Hours (200);                   //How long the simulation should run for.
+int NumberOfNodes = 1;                        //The number of end-node devices in the network.
+Time transmitInterval = Hours(1);             //How frequently end-nodes transmit. 0 = Random.
+Time dataCaptureInterval = Minutes(32);       //The time in between data sampling.
+std::string adrType = "ns3::AdrComponent";    //????????
+std::string outputFolder = "dat_output";      //Where output files (.dat) will be stored.
+double maxRandomLoss = 5;                    //The maximum amount of random loss that can be
+                                              //incurred by a transmission.
+double cityRadius = 6000;                     //Radius of the circular area end nodes are placed within.
+
 
 int main (int argc, char *argv[])
 {
+  CommandLine cmd;
+  cmd.AddValue ("nodes", "Number of end nodes to include in the simulation", NumberOfNodes);
+  cmd.AddValue ("genetic", "Whether to use the genetic algorithm or ADR algorithm", UseGeneticAlgorithm);
+  cmd.AddValue ("randomloss", "The amount of random loss (noise) for signals.", maxRandomLoss);
+  cmd.AddValue ("cityradius", "The size of the circular city environment.", cityRadius);
+  cmd.Parse(argc, argv);
+
+
   //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
   LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
 
@@ -89,12 +99,11 @@ int main (int argc, char *argv[])
 
 
   MobilityHelper mobility;
-  /*Ptr<ListPositionAllocator> allocator = CreateObject<ListPositionAllocator> ();
-  allocator->Add (Vector (1000,0,0));
-  allocator->Add (Vector (0,0,0));
-  mobility.SetPositionAllocator (allocator);*/
+  Ptr<ListPositionAllocator> allocator = CreateObject<ListPositionAllocator> ();
+  allocator->Add (Vector (3000,0,0));
+  mobility.SetPositionAllocator (allocator);
   //2650
-  mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (cityRadius), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
+  //mobility.SetPositionAllocator("ns3::UniformDiscPositionAllocator", "rho", DoubleValue (cityRadius), "X", DoubleValue (0.0), "Y", DoubleValue (0.0));
 
   mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
 

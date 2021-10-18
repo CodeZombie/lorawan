@@ -29,6 +29,32 @@ namespace ns3
             codingRate = randomGenerator->GetInteger(1, 4);
         }
 
+        bool TransmissionParameterSet::isEqual(TransmissionParameterSet *other)
+        {
+            bool equality = true;
+            if (spreadingFactor != other->spreadingFactor)
+            {
+                equality = false;
+            }
+
+            if (power != other->power)
+            {
+                equality = false;
+            }
+
+            if (bandwidth != other->bandwidth)
+            {
+                equality = false;
+            }
+
+            if (codingRate != other->codingRate)
+            {
+                equality = false;
+            }
+
+            return equality;
+        }
+
         TransmissionParameterSet::TransmissionParameterSet(int sf, int pow, int bw, int cr)
         {
             initializeRNG();
@@ -82,8 +108,7 @@ namespace ns3
                 codingRate = parent_b->codingRate;
             }
 
-            int mutate_probability = randomGenerator->GetInteger(1, 100);
-            if (mutate_probability > 85)
+            if (randomGenerator->GetInteger(1, 100) > 95)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
                 if (mutate_choice == 0)
@@ -108,7 +133,7 @@ namespace ns3
                     {
                         bandwidth *= 2;
                     }
-                    else if (bandwidth == 50000)
+                    else if (bandwidth == 500000)
                     {
                         bandwidth /= 2;
                     }
