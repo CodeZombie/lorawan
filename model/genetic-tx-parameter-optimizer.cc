@@ -12,9 +12,10 @@ namespace ns3
             NS_LOG_INFO("Instantiating a Genetic Transmission Parameter Optimizer.");
             currentTPSIndex = 0;
             randomGenerator = CreateObject<UniformRandomVariable>();
-            /*for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
+            for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
                 tpsPopulation[i] = new TransmissionParameterSet();
-            }*/
+            }
+            /*
             tpsPopulation[0] = new TransmissionParameterSet(7, 2, 125000, 1);
             tpsPopulation[1] = new TransmissionParameterSet(7, 14, 250000, 1);
             tpsPopulation[2] = new TransmissionParameterSet(8, 4, 125000, 1);
@@ -31,6 +32,7 @@ namespace ns3
             tpsPopulation[13] = new TransmissionParameterSet(8, 4, 250000, 3);
             tpsPopulation[14] = new TransmissionParameterSet(9, 12, 125000, 4);
             tpsPopulation[15] = new TransmissionParameterSet(8, 8, 250000, 3);
+            */
         }
 
         int GeneticTXParameterOptimizer::GetSuccesfulParameterSets()
@@ -96,7 +98,7 @@ namespace ns3
 
                 //delete all remaining unfit/unsuccesful objects from population.
                 //At this point every element in the tpsPopulation array will be NULL.
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
                 {
                     if (tpsPopulation[i] != NULL)
                     {

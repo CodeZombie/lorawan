@@ -238,6 +238,10 @@ private:
   //this keeps track of the last transmission parameters for logging.
   LoraTxParameters lastParams;
 
+  bool lastNTransmissionSuccess[32];
+  TracedValue<double> lastNPacketSuccessRate = 0;
+  void setLastFrameSuccess(bool success);
+
 }; /* ClassAEndDeviceLorawanMac */
 } /* namespace lorawan */
 } /* namespace ns3 */

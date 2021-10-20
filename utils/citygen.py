@@ -1,7 +1,8 @@
 from PIL import Image
 import random
+import math
 
-image = Image.open('topology.png') # Can be many different formats.
+image = Image.open('larger_topology.png') # Can be many different formats.
 pixels = image.load()
 
 node_location_file = open("node_locations.dat","w")
@@ -9,7 +10,7 @@ node_locations = []
 for x in range(image.size[0]):
     for y in range(image.size[1]):
         if pixels[x,y] == (0, 0, 0, 255):
-            node_locations.append([x,y])
+            node_locations.append([(x * 10) - math.floor((image.size[0]*10) / 2) , (y * 10) - math.floor((image.size[1]*10) / 2)])
 
 random.shuffle(node_locations)
 
