@@ -67,6 +67,14 @@ namespace ns3
             codingRate = cr;
         }
 
+        TransmissionParameterSet::TransmissionParameterSet(TransmissionParameterSet* other) {
+            initializeRNG();
+            spreadingFactor = other->spreadingFactor;
+            power = other->power;
+            bandwidth = other->bandwidth;
+            codingRate = other->codingRate;
+        }
+
         TransmissionParameterSet::TransmissionParameterSet(TransmissionParameterSet *parent_a, TransmissionParameterSet *parent_b)
         {
             initializeRNG();
@@ -111,7 +119,7 @@ namespace ns3
                 codingRate = parent_b->codingRate;
             }
 
-            if (randomGenerator->GetInteger(1, 100) > 95)
+            if (randomGenerator->GetInteger(1, 100) > 75)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
                 if (mutate_choice == 0)
@@ -195,8 +203,11 @@ namespace ns3
 
         void TransmissionParameterSet::Print()
         {
-            NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
+            //NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
+            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << std::endl;
+
         }
+        
 
         float TransmissionParameterSet::fitness()
         {

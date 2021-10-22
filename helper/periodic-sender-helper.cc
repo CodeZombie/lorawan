@@ -117,7 +117,7 @@ PeriodicSenderHelper::InstallPriv (Ptr<Node> node) const
       interval = m_period;
     }
 
-    
+    std::cout << interval.GetHours() << " hours" << std::endl;
 
   app->SetInterval (interval);
   NS_LOG_DEBUG ("Created an application with interval = " <<

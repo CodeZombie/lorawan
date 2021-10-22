@@ -12,10 +12,11 @@ namespace ns3
             NS_LOG_INFO("Instantiating a Genetic Transmission Parameter Optimizer.");
             currentTPSIndex = 0;
             randomGenerator = CreateObject<UniformRandomVariable>();
-            for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
+            successfulTransmissionParameterSets = std::vector<TransmissionParameterSet *>();
+            /*for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
                 tpsPopulation[i] = new TransmissionParameterSet();
-            }
-            /*
+            }*/
+
             tpsPopulation[0] = new TransmissionParameterSet(7, 2, 125000, 1);
             tpsPopulation[1] = new TransmissionParameterSet(7, 14, 250000, 1);
             tpsPopulation[2] = new TransmissionParameterSet(8, 4, 125000, 1);
@@ -32,7 +33,6 @@ namespace ns3
             tpsPopulation[13] = new TransmissionParameterSet(8, 4, 250000, 3);
             tpsPopulation[14] = new TransmissionParameterSet(9, 12, 125000, 4);
             tpsPopulation[15] = new TransmissionParameterSet(8, 8, 250000, 3);
-            */
         }
 
         int GeneticTXParameterOptimizer::GetSuccesfulParameterSets()
@@ -55,12 +55,35 @@ namespace ns3
 
         void GeneticTXParameterOptimizer::SetCurrentTransmissionParameterSetSuccess(bool successful)
         {
+            //add this tps to the list of successful tps' if successful
+            if (successful)
+            {
+                bool isInVectorAlready = false;
+                for (auto iter = successfulTransmissionParameterSets.begin(); iter != successfulTransmissionParameterSets.end(); iter++)
+                {
+                    if (tpsPopulation[currentTPSIndex]->isEqual((*iter)))
+                    {
+                        (*iter)->successCount++;
+                        isInVectorAlready = true;
+                        break;
+                    }
+                }
+                if (isInVectorAlready == false)
+                {
+                    //std::cout << "Adding TPS to Success List: " << std::endl;
+                    //tpsPopulation[currentTPSIndex]->Print();
+                    TransmissionParameterSet *tps = new TransmissionParameterSet(tpsPopulation[currentTPSIndex]);
+                    tps->successCount++;
+                    successfulTransmissionParameterSets.push_back(tps);
+                }
+            }
             tpsPopulation[currentTPSIndex]->successful = successful;
             AdvancePopulationOrGeneration();
         }
 
         void GeneticTXParameterOptimizer::AdvancePopulationOrGeneration()
         {
+
             //NS_LOG_INFO("Advancing to the next individual in the population");
             if (currentTPSIndex < (GENETIC_OPTIMIZER_POPULATION_SIZE - 1))
             {
@@ -71,6 +94,16 @@ namespace ns3
                 /* TODO: This algorithm is kinda whack?? The for loop with the "delete tpsPopulation[i]" is not making sense. */
 
                 NS_LOG_INFO("Entire population has been tested. Succesful: " << GetSuccesfulParameterSets());
+
+                //TEST:
+                //If zero new parameters are succesful, we just reset the same params and try again
+                /*if(GetSuccesfulParameterSets() == 0){
+                    for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
+                        tpsPopulation[i]->successful = -1;
+                    }
+                    currentTPSIndex = 0;
+                    return;
+                }*/
 
                 //Get all succesful individuals and sort them from most fit to least.
                 //Take the top 4, generating new random ones if there are not 4 (NOTE: weighted toward being longer range)
@@ -85,7 +118,12 @@ namespace ns3
                         //if no fittest was found, generate a new one randomly.
                         //NOTE: we want to insert some bias here toward more energy-intensive settings as if we get here it means
                         //  we probably need stronger settings.
-                        fitpop[i] = new TransmissionParameterSet();
+                        //Instead of generating some random thing, randomly grab one of the previously successful params.
+
+                        //fitpop[i] = new TransmissionParameterSet(12, 14, 125000, 4);
+                        //std::cout << "Pulling from stps " << std::endl;
+                        
+                        fitpop[i] = new TransmissionParameterSet(successfulTransmissionParameterSets[rand() % successfulTransmissionParameterSets.size()]);
                     }
                     else
                     {
@@ -122,12 +160,12 @@ namespace ns3
                 {
                     tpsPopulation[i] = fitpop[i];
                     tpsPopulation[i]->successful = -1;
-                    tpsPopulation[i]->Print();
                 }
 
                 //create n - 4 new individuals. They must ALL be unique.
                 for (int i = 4; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
                 {
+                    /*
                     bool unique = false;
                     TransmissionParameterSet *newIndividual;
                     while (!unique)
@@ -153,6 +191,10 @@ namespace ns3
                         }
                     }
                     tpsPopulation[i] = newIndividual;
+                    */
+                    int parent_id_a = randomGenerator->GetInteger(0, 3);
+                    int parent_id_b = randomGenerator->GetInteger(0, 3);
+                    tpsPopulation[i] = new TransmissionParameterSet(fitpop[parent_id_a], fitpop[parent_id_b]);
                 }
             }
         }

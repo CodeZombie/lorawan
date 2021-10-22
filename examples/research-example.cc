@@ -53,7 +53,6 @@ double maxRandomLoss = 5;                  //The maximum amount of random loss t
 
 int main(int argc, char *argv[])
 {
-
   /*****************************
    ****** COMMAND LINE *********
    ****************************/

@@ -25,6 +25,7 @@ namespace ns3
             void AdvancePopulationOrGeneration();
             int GetIndexOfFittestTPSInPopulation();
             TransmissionParameterSet *tpsPopulation[GENETIC_OPTIMIZER_POPULATION_SIZE];
+            std::vector<TransmissionParameterSet*> successfulTransmissionParameterSets;
             int currentTPSIndex = 0;
             Ptr<UniformRandomVariable> randomGenerator;
         };
