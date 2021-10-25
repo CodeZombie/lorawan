@@ -42,13 +42,13 @@ NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
 //TODO: Add some Genetic Algorithm parameter customization options here. (Population size, mutation rate, etc)
 
 bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic Algorithms or ADR.
-int simTimeHours = 350;                  //How long the simulation should run for.
-int NumberOfNodes = 1182;                   //The number of end-node devices in the network.
-Time transmitInterval = Hours(0);          //How frequently end-nodes transmit. 0 = Random.
+int simTimeHours = 350;                    //How long the simulation should run for.
+int NumberOfNodes = 1182;                  //The number of end-node devices in the network.
+Time transmitInterval = Hours(0.2);          //How frequently end-nodes transmit. 0 = Random.
 Time dataCaptureInterval = Minutes(32);    //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
-double maxRandomLoss = 5;                  //The maximum amount of random loss that can be
+double maxRandomLoss = 0;                  //The maximum amount of random loss that can be
                                            //incurred by a transmission.
 
 int main(int argc, char *argv[])
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
    ****************************/
   CommandLine cmd;
   cmd.AddValue("nodes", "Number of end nodes to include in the simulation", NumberOfNodes);
-  cmd.AddValue ("genetic", "Whether to use the genetic algorithm or ADR algorithm", UseGeneticAlgorithm);
+  cmd.AddValue("genetic", "Whether to use the genetic algorithm or ADR algorithm", UseGeneticAlgorithm);
   cmd.AddValue("randomloss", "The amount of random loss (noise) for signals.", maxRandomLoss);
   cmd.AddValue("simulationtime", "The length of the simulation in Hours", simTimeHours);
   cmd.AddValue("outputfolder", "The name of the folder to stick output data into.", outputFolder);
@@ -73,6 +73,8 @@ int main(int argc, char *argv[])
    ****************************/
   //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
   //LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
+
+  LogComponentEnable("EndDeviceLorawanMac", LOG_LEVEL_WARN);
 
   if (UseGeneticAlgorithm == false)
   {

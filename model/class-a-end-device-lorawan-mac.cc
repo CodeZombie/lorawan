@@ -143,6 +143,9 @@ namespace ns3
         params.codingRate = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->codingRate;
         params.bandwidthHz = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->bandwidth;
         //manually set the datarate:
+        //This is PROBABLY unecessary. ADRACKREQ's require datarates to be set like this, but the device
+        //  should still be able to listen without messing around with DR stuff.  
+        //Let's remove this chunk and see if things still work w/o adr.
         if (params.sf == 12)
         {
           m_dataRate = 0;
@@ -218,7 +221,17 @@ namespace ns3
       uint8_t replyDataRate = GetFirstReceiveWindowDataRate();
       NS_LOG_INFO("m_dataRate: " << unsigned(m_dataRate) << ", m_rx1DrOffset: " << unsigned(m_rx1DrOffset) << ", replyDataRate: " << unsigned(replyDataRate) << ".");
 
-      m_phy->GetObject<EndDeviceLoraPhy>()->SetSpreadingFactor(GetSfFromDataRate(replyDataRate));
+
+      //TODO: Figure out if this is even valid? GetSFFromDataRate might be necessary for 
+      //  non-ADR tx's as well as ADR'd ones.
+      //if (useGeneticParamaterSelection)
+      //{
+      //  m_phy->GetObject<EndDeviceLoraPhy>()->SetSpreadingFactor(params.sf);
+      //}
+      //else
+      //{
+        m_phy->GetObject<EndDeviceLoraPhy>()->SetSpreadingFactor(GetSfFromDataRate(replyDataRate));
+      //}
     }
 
     //////////////////////////
@@ -578,8 +591,9 @@ namespace ns3
         double successful = 0;
         for (int i = 0; i < 32; i++)
         {
-          if(lastNTransmissionSuccess[i] == true){
-            successful+=1.0;
+          if (lastNTransmissionSuccess[i] == true)
+          {
+            successful += 1.0;
           }
         }
         lastNPacketSuccessRate = successful / 32.0;

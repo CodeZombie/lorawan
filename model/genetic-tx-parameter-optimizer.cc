@@ -12,31 +12,32 @@ namespace ns3
             NS_LOG_INFO("Instantiating a Genetic Transmission Parameter Optimizer.");
             currentTPSIndex = 0;
             randomGenerator = CreateObject<UniformRandomVariable>();
-            successfulTransmissionParameterSets = std::vector<TransmissionParameterSet *>();
+            currentTPS = new TransmissionParameterSet(currentSF, currentTP, currentBW, currentCR);
             /*for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
                 tpsPopulation[i] = new TransmissionParameterSet();
             }*/
-
-            tpsPopulation[0] = new TransmissionParameterSet(7, 2, 125000, 1);
-            tpsPopulation[1] = new TransmissionParameterSet(7, 14, 250000, 1);
-            tpsPopulation[2] = new TransmissionParameterSet(8, 4, 125000, 1);
-            tpsPopulation[3] = new TransmissionParameterSet(8, 12, 250000, 2);
-            tpsPopulation[4] = new TransmissionParameterSet(9, 2, 125000, 1);
-            tpsPopulation[5] = new TransmissionParameterSet(9, 10, 250000, 3);
-            tpsPopulation[6] = new TransmissionParameterSet(10, 6, 125000, 2);
-            tpsPopulation[7] = new TransmissionParameterSet(10, 14, 250000, 1);
-            tpsPopulation[8] = new TransmissionParameterSet(11, 8, 125000, 2);
-            tpsPopulation[9] = new TransmissionParameterSet(11, 2, 250000, 1);
-            tpsPopulation[10] = new TransmissionParameterSet(12, 14, 125000, 2);
-            tpsPopulation[11] = new TransmissionParameterSet(12, 2, 250000, 1);
-            tpsPopulation[12] = new TransmissionParameterSet(7, 12, 125000, 4);
-            tpsPopulation[13] = new TransmissionParameterSet(8, 4, 250000, 3);
-            tpsPopulation[14] = new TransmissionParameterSet(9, 12, 125000, 4);
-            tpsPopulation[15] = new TransmissionParameterSet(8, 8, 250000, 3);
+            /*currentPopulationIndices = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+            transmissionParameterSet.push_back(new TransmissionParameterSet(7, 2, 125000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(7, 14, 250000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(8, 4, 125000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(8, 12, 250000, 2));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(9, 2, 125000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(9, 10, 250000, 3));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(10, 6, 125000, 2));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(10, 14, 250000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(11, 8, 125000, 2));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(11, 2, 250000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(12, 14, 125000, 2));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(12, 2, 250000, 1));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(7, 12, 125000, 4));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(8, 4, 250000, 3));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(9, 12, 125000, 4));
+            transmissionParameterSet.push_back(new TransmissionParameterSet(8, 8, 250000, 3));*/
         }
 
         int GeneticTXParameterOptimizer::GetSuccesfulParameterSets()
         {
+            /*
             int successfulSets = 0;
             for (int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
             {
@@ -45,17 +46,22 @@ namespace ns3
                     successfulSets++;
                 }
             }
-            return successfulSets;
+            return successfulSets;*/
+            return -1;
         }
+
+
 
         TransmissionParameterSet *GeneticTXParameterOptimizer::GetCurrentTransmissionParameterSet()
         {
-            return tpsPopulation[currentTPSIndex];
+            return currentTPS;
+            //return currentPopulationIndices[currentTPSIndex];
         }
 
         void GeneticTXParameterOptimizer::SetCurrentTransmissionParameterSetSuccess(bool successful)
         {
             //add this tps to the list of successful tps' if successful
+            /*
             if (successful)
             {
                 bool isInVectorAlready = false;
@@ -78,12 +84,50 @@ namespace ns3
                 }
             }
             tpsPopulation[currentTPSIndex]->successful = successful;
+            */
+
+            /*if (successful)
+            {
+                transmissionParameterSets[currentPopulationIndices[currentTPSIndex]]->successCount++;
+            }
+            else
+            {
+                transmissionParameterSets[currentPopulationIndices[currentTPSIndex]]->failureCount++;
+            }*/
+            currentTPS->Print();
+            std::cout << "Successful = " << successful << std::endl;
             AdvancePopulationOrGeneration();
         }
 
         void GeneticTXParameterOptimizer::AdvancePopulationOrGeneration()
         {
-
+            //this is vile.
+            if(currentSF < MAX_SF){
+                currentSF++;
+            }else{
+                currentSF = MIN_SF;
+                if(currentTP < MAX_TP){
+                    currentTP++;
+                }else{
+                    currentTP = MIN_TP;
+                    if(currentBW < MAX_BW){
+                        currentBW *= 2;
+                    }else{
+                        currentBW = MIN_BW;
+                        if(currentCR < MAX_CR){
+                            currentCR++;
+                        }else{
+                            currentCR = MIN_CR;
+                        }
+                    }
+                }
+            }
+            //std::cout << "SF: " << currentSF << "  TP: " << currentTP << "  BW: " << currentBW << "  CR: " << currentCR << std::endl;
+            
+            delete currentTPS;
+            currentTPS = new TransmissionParameterSet(currentSF, currentTP, currentBW, currentCR);
+            return;
+            /*
             //NS_LOG_INFO("Advancing to the next individual in the population");
             if (currentTPSIndex < (GENETIC_OPTIMIZER_POPULATION_SIZE - 1))
             {
@@ -91,22 +135,27 @@ namespace ns3
             }
             else
             {
-                /* TODO: This algorithm is kinda whack?? The for loop with the "delete tpsPopulation[i]" is not making sense. */
 
-                NS_LOG_INFO("Entire population has been tested. Succesful: " << GetSuccesfulParameterSets());
+                currentTPSIndex = 0;
 
-                //TEST:
-                //If zero new parameters are succesful, we just reset the same params and try again
-                /*if(GetSuccesfulParameterSets() == 0){
-                    for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++){
-                        tpsPopulation[i]->successful = -1;
-                    }
-                    currentTPSIndex = 0;
-                    return;
-                }*/
+                //Find the most-fit individuals with a PER under 0.1
+                //if no individuals are below 0.1, just find the lowest PER individuals.
+                for (auto iter = transmissionParameterSets.begin(); iter != transmissionParameterSets.end(); iter++)
+                {
+                    //find all individuals with a PER sub 0.1.
+                    //These individuals will be sorted by fitness in the next block.
+                }
 
-                //Get all succesful individuals and sort them from most fit to least.
-                //Take the top 4, generating new random ones if there are not 4 (NOTE: weighted toward being longer range)
+                //sort by fitness.
+
+                //choose the top 4 and mutate/cross them into 16 new individuals.
+
+                //its likely that some of these new individuals wont be "new", so make sure to check
+                //their originality within transmissionParameterSets vector before adding.
+
+                //if there arent 4 individuals below 0.1 PER, choose the lowest PERs, ignoring fitness.
+
+                
 
                 currentTPSIndex = 0;
                 TransmissionParameterSet *fitpop[4];
@@ -122,7 +171,7 @@ namespace ns3
 
                         //fitpop[i] = new TransmissionParameterSet(12, 14, 125000, 4);
                         //std::cout << "Pulling from stps " << std::endl;
-                        
+
                         fitpop[i] = new TransmissionParameterSet(successfulTransmissionParameterSets[rand() % successfulTransmissionParameterSets.size()]);
                     }
                     else
@@ -146,7 +195,7 @@ namespace ns3
                 }
 
                 //create a new population by combining the 4 fit individuals.
-                /*
+                
                 for (int x = 0; x < 4; x++)
                 {
                     for (int y = 0; y < 4; y++)
@@ -154,6 +203,8 @@ namespace ns3
                         tpsPopulation[(y * 4) + x] = new TransmissionParameterSet(fitpop[x], fitpop[y]);
                     }
                 }*/
+
+                /*
 
                 //pass the 4 parents to the new generation.
                 for (int i = 0; i < 4; i++)
@@ -165,7 +216,7 @@ namespace ns3
                 //create n - 4 new individuals. They must ALL be unique.
                 for (int i = 4; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
                 {
-                    /*
+                    
                     bool unique = false;
                     TransmissionParameterSet *newIndividual;
                     while (!unique)
@@ -192,15 +243,18 @@ namespace ns3
                     }
                     tpsPopulation[i] = newIndividual;
                     */
+                   /*
                     int parent_id_a = randomGenerator->GetInteger(0, 3);
                     int parent_id_b = randomGenerator->GetInteger(0, 3);
                     tpsPopulation[i] = new TransmissionParameterSet(fitpop[parent_id_a], fitpop[parent_id_b]);
                 }
             }
+            */
         }
 
         int GeneticTXParameterOptimizer::GetIndexOfFittestTPSInPopulation()
         {
+            /*
             int fittestIndex = -1;
             for (int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
             {
@@ -219,6 +273,8 @@ namespace ns3
             }
 
             return fittestIndex;
+            */
+           return -1;
         }
     }
 }

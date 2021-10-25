@@ -17,6 +17,7 @@ namespace ns3
             TransmissionParameterSet(int sf, int pow, int bw, int cr);
             TransmissionParameterSet(TransmissionParameterSet *parent_a, TransmissionParameterSet *parent_b);
 
+            float getPER();
             int mutateValue(int originalValue, int delta, int min, int max);
             void Print();
             float fitness();
@@ -29,8 +30,9 @@ namespace ns3
             int spreadingFactor;
             int bandwidth;
             int codingRate;
-            int successful = -1; //-1 is untested. 0 is failed. 1 is success.
+
             int successCount = 0;
+            int failureCount = 0;
 
         private:
             Ptr<UniformRandomVariable> randomGenerator;

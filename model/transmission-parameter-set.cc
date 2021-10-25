@@ -1,5 +1,7 @@
 #include "ns3/transmission-parameter-set.h"
-
+//TODO:
+//      Refine the valid ranges of data. For example, TXp 14 and BW 500k I think is invalid.
+//      The system should check for that.
 namespace ns3
 {
     namespace lorawan
@@ -61,6 +63,10 @@ namespace ns3
         TransmissionParameterSet::TransmissionParameterSet(int sf, int pow, int bw, int cr)
         {
             initializeRNG();
+
+            if(pow > 14 && sf > 7){
+                pow = 14;
+            }
             spreadingFactor = sf;
             power = pow;
             bandwidth = bw;
@@ -163,6 +169,11 @@ namespace ns3
                 }
             }
         }
+        
+        float TransmissionParameterSet::getPER() {
+            float totalTransmissions = successCount + failureCount;
+            return static_cast<float>(failureCount) / totalTransmissions;
+        }
 
         int TransmissionParameterSet::mutateValue(int originalValue, int delta, int min, int max)
         {
@@ -204,8 +215,7 @@ namespace ns3
         void TransmissionParameterSet::Print()
         {
             //NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
-            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << std::endl;
-
+            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << std::endl;
         }
         
 
@@ -216,6 +226,10 @@ namespace ns3
 
         float TransmissionParameterSet::fitness(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
         {
+            //TODO: incorporate PER into this.
+
+
+
             //First, calculate the data rate of the given parameters.
             float datarate = (spreadingfactor * (bandwidth * 4 / std::pow(2, spreadingfactor)) * (1.0f / (codingrate + 4.0f)));
 
