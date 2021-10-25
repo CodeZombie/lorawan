@@ -94,8 +94,13 @@ namespace ns3
             {
                 transmissionParameterSets[currentPopulationIndices[currentTPSIndex]]->failureCount++;
             }*/
-            currentTPS->Print();
+            //currentTPS->Print();
             std::cout << "Successful = " << successful << std::endl;
+            if(successful == 0){
+                std::cout << "#############################################" << std::endl;
+                std::cout << "################ FAILED #####################" << std::endl;
+                std::cout << "#############################################" << std::endl;
+            }
             AdvancePopulationOrGeneration();
         }
 

@@ -63,10 +63,6 @@ namespace ns3
         TransmissionParameterSet::TransmissionParameterSet(int sf, int pow, int bw, int cr)
         {
             initializeRNG();
-
-            if(pow > 14 && sf > 7){
-                pow = 14;
-            }
             spreadingFactor = sf;
             power = pow;
             bandwidth = bw;

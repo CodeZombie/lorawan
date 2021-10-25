@@ -136,6 +136,8 @@ namespace ns3
 
       if (useGeneticParamaterSelection)
       {
+        std::cout << "SendToPhy()" << std::endl;
+        geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
         m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
 
         m_txPower = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->power;
