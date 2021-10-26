@@ -232,6 +232,7 @@ private:
   TracedValue<uint32_t> TransmissionsSent = 0;
   TracedValue<uint32_t> UnacknowledgedTransmissions = 0;
   TracedValue<double> PacketErrorRate = 0;
+  TracedValue<double> TotalPowerConsumption = 0;
   
   GeneticTXParameterOptimizer* geneticTXParameterOptimizer;
 

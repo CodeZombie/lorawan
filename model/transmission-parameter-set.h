@@ -24,6 +24,7 @@ namespace ns3
             bool isEqual(TransmissionParameterSet *other);
             int dataRate();
             void onAckOrNack(bool successful);
+            float PowerConsumption();
 
             static float PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power);
 

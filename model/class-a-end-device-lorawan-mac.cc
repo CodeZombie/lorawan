@@ -72,6 +72,11 @@ namespace ns3
                                             "The PSR of the last N (32) frames sent. Interval set externally.",
                                             DoubleValue(false),
                                             MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::lastNPacketSuccessRate),
+                                            MakeDoubleChecker<float>())
+                              .AddAttribute("TotalPowerConsumption",
+                                            "Total accumulated power consumption of this node.",
+                                            DoubleValue(false),
+                                            MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::TotalPowerConsumption),
                                             MakeDoubleChecker<float>());
 
       return tid;
@@ -136,9 +141,9 @@ namespace ns3
 
       if (useGeneticParamaterSelection)
       {
-        geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
+        //geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
         m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
-
+        //TotalPowerConsumption += geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->PowerConsumption();
         m_txPower = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->power;
         params.sf = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->spreadingFactor;
         params.codingRate = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->codingRate;
@@ -181,7 +186,8 @@ namespace ns3
         params.sf = GetSfFromDataRate(m_dataRate);
         params.codingRate = m_codingRate;
         params.bandwidthHz = GetBandwidthFromDataRate(m_dataRate);
-        std::cout << "SF: " << +params.sf << " TP: " << +m_txPower << " BW: " << +params.bandwidthHz << " CR: " << +params.codingRate << std::endl;
+        //TotalPowerConsumption += TransmissionParameterSet::PowerConsumption(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
+        //std::cout << "SF: " << +params.sf << " TP: " << +m_txPower << " BW: " << +params.bandwidthHz << " CR: " << +params.codingRate << std::endl;
         //m_lastFitnessLevel = TransmissionParameterSet::fitness(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
       }
 
@@ -189,6 +195,8 @@ namespace ns3
       params.nPreamble = m_nPreambleSymbols;
       params.crcEnabled = 1;
       params.lowDataRateOptimizationEnabled = LoraPhy::GetTSym(params) > MilliSeconds(16) ? true : false;
+
+      TotalPowerConsumption += m_phy->GetOnAirTime(packetToSend, params).GetSeconds() * m_txPower;
 
       lastParams.sf = params.sf;
       lastParams.codingRate = params.codingRate;

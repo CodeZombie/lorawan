@@ -84,10 +84,10 @@ namespace ns3
                     AddToPopulation(i, new TransmissionParameterSet(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b]));
                 }
 
-                std::cout << "    #### NEW POPULATION ####" << std::endl;
+                /*std::cout << "    #### NEW POPULATION ####" << std::endl;
                 for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++) {
                     transmissionParameterSets[currentPopulationIndices[i]]->Print();
-                }
+                }*/
             }
         }
 

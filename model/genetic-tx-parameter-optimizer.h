@@ -28,6 +28,7 @@ namespace ns3
             GeneticTXParameterOptimizer();
             TransmissionParameterSet *GetCurrentTransmissionParameterSet();
             void SetCurrentTransmissionParameterSetSuccess(bool successful);
+            void StopOptimizing();
 
         private:
             void AdvancePopulationOrGeneration();
@@ -44,7 +45,7 @@ namespace ns3
             int currentTPSIndex = 0;
 
             
-            
+            bool isOptimizing = true;
             Ptr<UniformRandomVariable> randomGenerator;
         };
     }

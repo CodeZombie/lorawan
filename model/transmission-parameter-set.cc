@@ -236,7 +236,9 @@ namespace ns3
             return powerConsumption + (powerConsumption * getPER());
         }
 
-
+        float TransmissionParameterSet::PowerConsumption() {
+            return PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
+        }
 
         float TransmissionParameterSet::PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
         {
