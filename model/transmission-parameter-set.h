@@ -23,8 +23,9 @@ namespace ns3
             float fitness();
             bool isEqual(TransmissionParameterSet *other);
             int dataRate();
+            void onAckOrNack(bool successful);
 
-            static float fitness(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power);
+            static float PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power);
 
             int power;
             int spreadingFactor;
@@ -34,9 +35,10 @@ namespace ns3
             int successCount = 0;
             int failureCount = 0;
 
+            static bool CompareFitness(TransmissionParameterSet *a, TransmissionParameterSet *b);
+
         private:
             Ptr<UniformRandomVariable> randomGenerator;
-
             void initializeRNG();
         };
 

@@ -1,6 +1,7 @@
 #ifndef GENETIC_TX_PARAMETER_OPTIMIZER_H
 #define GENETIC_TX_PARAMETER_OPTIMIZER_H
 
+#include <algorithm>
 #include "ns3/transmission-parameter-set.h"
 #include "ns3/log.h"
 
@@ -25,25 +26,24 @@ namespace ns3
         {
         public:
             GeneticTXParameterOptimizer();
-            int GetSuccesfulParameterSets();
             TransmissionParameterSet *GetCurrentTransmissionParameterSet();
             void SetCurrentTransmissionParameterSetSuccess(bool successful);
 
         private:
             void AdvancePopulationOrGeneration();
-            int GetIndexOfFittestTPSInPopulation();
-            //TransmissionParameterSet *tpsPopulation[GENETIC_OPTIMIZER_POPULATION_SIZE];
+            void AddToPopulation(int offset, TransmissionParameterSet* tps);
+            //A vector containing all TPSs that have been tried.
+            std::vector<TransmissionParameterSet*> transmissionParameterSets;
+            
+            //an array containing the indices within the above vector indicating which
+            //TPSs are being tested this generations
             int currentPopulationIndices[GENETIC_OPTIMIZER_POPULATION_SIZE];
+
+            //The index of the current index within the above array. 
+            //(will always be between 0 and GENETIC_OPTIMIZER_POPULATION_SIZE)
             int currentTPSIndex = 0;
 
-            //test
-            int currentSF = 7;
-            int currentTP = 2;
-            int currentBW = 125000;
-            int currentCR = 1;
-            TransmissionParameterSet* currentTPS;
-
-            std::vector<TransmissionParameterSet*> transmissionParameterSets;
+            
             
             Ptr<UniformRandomVariable> randomGenerator;
         };

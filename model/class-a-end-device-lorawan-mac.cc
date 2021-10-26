@@ -136,7 +136,6 @@ namespace ns3
 
       if (useGeneticParamaterSelection)
       {
-        std::cout << "SendToPhy()" << std::endl;
         geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
         m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
 
@@ -182,7 +181,8 @@ namespace ns3
         params.sf = GetSfFromDataRate(m_dataRate);
         params.codingRate = m_codingRate;
         params.bandwidthHz = GetBandwidthFromDataRate(m_dataRate);
-        m_lastFitnessLevel = TransmissionParameterSet::fitness(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
+        std::cout << "SF: " << +params.sf << " TP: " << +m_txPower << " BW: " << +params.bandwidthHz << " CR: " << +params.codingRate << std::endl;
+        //m_lastFitnessLevel = TransmissionParameterSet::fitness(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
       }
 
       params.headerDisabled = m_headerDisabled;
@@ -573,10 +573,6 @@ namespace ns3
 
         NS_LOG_INFO("Successfully Recieved Ack from Transmission with fitness: " << geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness());
         geneticTXParameterOptimizer->SetCurrentTransmissionParameterSetSuccess(true);
-      }
-      else
-      {
-        NS_LOG_INFO("Successfully Recieved Ack from Transmission with fitness: " << TransmissionParameterSet::fitness(lastParams.sf, lastParams.bandwidthHz, lastParams.codingRate, m_txPower));
       }
     }
 

@@ -167,8 +167,11 @@ namespace ns3
         }
         
         float TransmissionParameterSet::getPER() {
-            float totalTransmissions = successCount + failureCount;
-            return static_cast<float>(failureCount) / totalTransmissions;
+            int totalTransmissions = successCount + failureCount;
+            if(totalTransmissions == 0){
+                return 0.0;
+            }
+            return 1 - ((float)failureCount / (float)totalTransmissions);
         }
 
         int TransmissionParameterSet::mutateValue(int originalValue, int delta, int min, int max)
@@ -211,16 +214,31 @@ namespace ns3
         void TransmissionParameterSet::Print()
         {
             //NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
-            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << std::endl;
+            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " PER=" << getPER() << std::endl;
         }
         
-
-        float TransmissionParameterSet::fitness()
-        {
-            return fitness(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
+        void TransmissionParameterSet::onAckOrNack(bool successful) {
+            if(successful){
+                successCount++;
+            }else{
+                failureCount++;
+            }
         }
 
-        float TransmissionParameterSet::fitness(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
+        bool TransmissionParameterSet::CompareFitness(TransmissionParameterSet *a, TransmissionParameterSet *b) {
+            return a->fitness() > b->fitness();
+        }
+
+        //  Fitness function: lower is better.
+        float TransmissionParameterSet::fitness()
+        {
+            float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
+            return powerConsumption + (powerConsumption * getPER());
+        }
+
+
+
+        float TransmissionParameterSet::PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
         {
             //TODO: incorporate PER into this.
 
