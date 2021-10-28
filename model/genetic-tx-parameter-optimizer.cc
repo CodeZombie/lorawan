@@ -20,7 +20,7 @@ namespace ns3
             {
                 currentPopulationIndices[i] = i;
             }
-            transmissionParameterSets.push_back(new TransmissionParameterSet(7, 2, 125000, 1));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(7, 2, 500000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(7, 14, 250000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 125000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 12, 250000, 2));
@@ -34,23 +34,35 @@ namespace ns3
             transmissionParameterSets.push_back(new TransmissionParameterSet(12, 2, 250000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(7, 12, 125000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 250000, 3));
-            transmissionParameterSets.push_back(new TransmissionParameterSet(9, 12, 125000, 4));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(12, 12, 500000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 8, 250000, 3));
         }
 
         TransmissionParameterSet *GeneticTXParameterOptimizer::GetCurrentTransmissionParameterSet()
         {
-            return transmissionParameterSets[currentPopulationIndices[currentTPSIndex]];
+            if(isOptimizing) {
+                return transmissionParameterSets[currentPopulationIndices[currentTPSIndex]];
+            }else{
+                //get the most-fit (lowest scoring) TPS from the transmissionParameterSet list.
+                return MostFitTPS;
+            }
         }
 
         void GeneticTXParameterOptimizer::SetCurrentTransmissionParameterSetSuccess(bool successful)
         {
-            GetCurrentTransmissionParameterSet()->onAckOrNack(successful);
-            AdvancePopulationOrGeneration();
+            if(!isOptimizing) {
+                return;
+            }
+                GetCurrentTransmissionParameterSet()->onAckOrNack(successful);
+                AdvancePopulationOrGeneration();
+            
         }
 
         void GeneticTXParameterOptimizer::AdvancePopulationOrGeneration()
         {
+            if(!isOptimizing){
+                return;
+            }
 
             if (currentTPSIndex < (GENETIC_OPTIMIZER_POPULATION_SIZE - 1))
             {
@@ -59,6 +71,22 @@ namespace ns3
             }
             else
             {
+                currentGeneration++;
+                if(currentGeneration == MAX_GENERATIONS) {
+                    //Get the most-fit individual from the master list.
+                    std::sort(transmissionParameterSets.begin(), transmissionParameterSets.end(), TransmissionParameterSet::CompareFitness);
+                    MostFitTPS = transmissionParameterSets[0];
+                    isOptimizing = false;
+                    return;
+                }
+
+                std::cout << "###### OLD POPULATION" << (currentGeneration - 1) << ": ########################################" << std::endl;
+                for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++) {
+                    transmissionParameterSets[currentPopulationIndices[i]]->Print();
+                }
+                std::cout << "###############################################################" << std::endl;
+
+
                 NS_LOG_INFO("Population depleted. Generating a new Population.");
                 currentTPSIndex = 0;
 
@@ -74,40 +102,50 @@ namespace ns3
 
                 //sort this vector by Fitness (PER and PowerCons.)
                 std::sort(fittestTPSs.begin(), fittestTPSs.end(), TransmissionParameterSet::CompareFitness);
-
+                
+                for(int i = 0; i < 4; i++){
+                    AddToPopulation(i, fittestTPSs[i]);
+                }
+                
                 //fill the population index array up with new stuff.
-                for (int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
+                for (int i = 4; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
                 {
                     int parent_id_a = randomGenerator->GetInteger(0, 3);
                     int parent_id_b = randomGenerator->GetInteger(0, 3);
-            
-                    AddToPopulation(i, new TransmissionParameterSet(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b]));
+                    TransmissionParameterSet *newTPS = new TransmissionParameterSet(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b]);
+                    bool unique = AddToPopulation(i, newTPS);
+                    if(!unique) {
+                        delete newTPS;
+                    }
                 }
 
                 /*std::cout << "    #### NEW POPULATION ####" << std::endl;
                 for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++) {
                     transmissionParameterSets[currentPopulationIndices[i]]->Print();
                 }*/
+                //std::cout << "FInished gen new pop" << std::endl;
             }
         }
 
-        void GeneticTXParameterOptimizer::AddToPopulation(int offset, TransmissionParameterSet *tps)
+        bool GeneticTXParameterOptimizer::AddToPopulation(int offset, TransmissionParameterSet *tps)
         {
             //check to see if this tps is identical to any other's in the major list.
             for (uint32_t i = 0; i < transmissionParameterSets.size(); i++)
             {
                 if (tps->isEqual(transmissionParameterSets[i]))
                 {
-                    delete tps;
+
+                    //delete tps;
                     //add i to the pop index array
                     currentPopulationIndices[offset] = i;
-                    return;
+                    return false;
                 }
             }
 
             //add tps pointer to the major list and then add it's index to the pop index array.
             transmissionParameterSets.push_back(tps);
             currentPopulationIndices[offset] = transmissionParameterSets.size() - 1;
+            return true;
         }
     }
 }

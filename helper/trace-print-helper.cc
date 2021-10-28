@@ -24,20 +24,26 @@ namespace lorawan {
 
 
         for (std::vector<TracePrintAttribute*>::iterator attribute = tracePrintAttributes->begin(); attribute != tracePrintAttributes->end(); ++attribute) {
-            double sumValue = 0;
+            double doubleSumValue = 0;
+            uint32_t intSumValue = 0;
+
             for (NodeContainer::Iterator j = monitoredNodes->Begin (); j != monitoredNodes->End (); ++j) {
                 if((*attribute)->type == TracePrintAttributeTypes::Double) {
                     DoubleValue value;
                     (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
                     if((*attribute)->mode == TracePrintCombineMode::Sum) {
-                        sumValue += value.Get();
+                        doubleSumValue += value.Get();
                     }else{
                         (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
                     }
                 }else if((*attribute)->type == TracePrintAttributeTypes::Integer){
                     IntegerValue value;
                     (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
-                    (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                    if((*attribute)->mode == TracePrintCombineMode::Sum) {
+                        intSumValue += value.Get();
+                    }else{
+                        (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                    }
                 }else if((*attribute)->type == TracePrintAttributeTypes::Uinteger){
                     UintegerValue value;
                     (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
@@ -49,7 +55,12 @@ namespace lorawan {
                 }
             }
             if((*attribute)->mode == TracePrintCombineMode::Sum){
-                (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << sumValue << std::endl;
+                if((*attribute)->type == TracePrintAttributeTypes::Double){
+                    (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << doubleSumValue << std::endl;
+                }
+                else if((*attribute)->type == TracePrintAttributeTypes::Integer){
+                    (*attribute)->fileStream << ns3::Simulator::Now().GetHours() << " " << intSumValue << std::endl;
+                }
             }
         }
 

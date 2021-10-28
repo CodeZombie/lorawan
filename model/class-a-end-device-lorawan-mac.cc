@@ -77,7 +77,13 @@ namespace ns3
                                             "Total accumulated power consumption of this node.",
                                             DoubleValue(false),
                                             MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::TotalPowerConsumption),
-                                            MakeDoubleChecker<float>());
+                                            MakeDoubleChecker<float>())
+                              .AddAttribute("TransmissionsSent",
+                                            "Total number of transmissions sent by this node. Includes retransmissions.",
+                                            IntegerValue(false),
+                                            MakeIntegerAccessor(&ClassAEndDeviceLorawanMac::TransmissionsSent),
+                                            MakeIntegerChecker<uint32_t>())              
+                              ;
 
       return tid;
     }
@@ -141,7 +147,7 @@ namespace ns3
 
       if (useGeneticParamaterSelection)
       {
-        //geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
+        geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
         m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
         //TotalPowerConsumption += geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->PowerConsumption();
         m_txPower = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->power;
@@ -196,14 +202,11 @@ namespace ns3
       params.crcEnabled = 1;
       params.lowDataRateOptimizationEnabled = LoraPhy::GetTSym(params) > MilliSeconds(16) ? true : false;
 
-      TotalPowerConsumption += m_phy->GetOnAirTime(packetToSend, params).GetSeconds() * m_txPower;
-
       lastParams.sf = params.sf;
       lastParams.codingRate = params.codingRate;
       lastParams.bandwidthHz = params.bandwidthHz;
 
       // Wake up PHY layer and directly send the packet
-
       Ptr<LogicalLoraChannel> txChannel = GetChannelForTx();
 
       //NS_LOG_DEBUG ("PacketToSend: " << packetToSend);
@@ -215,6 +218,9 @@ namespace ns3
 
       // Compute packet duration
       Time duration = m_phy->GetOnAirTime(packetToSend, params);
+
+      //Keep track of how much power we're consuming.
+      TotalPowerConsumption += duration.GetSeconds() * m_txPower;
 
       // Register the sent packet into the DutyCycleHelper
       m_channelHelper.AddEvent(duration, txChannel);

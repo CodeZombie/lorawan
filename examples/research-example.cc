@@ -175,8 +175,7 @@ int main(int argc, char *argv[])
   tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
   tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
   tracePrintHelper->WatchAttribute("TotalPowerConsumption", TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum);
-
-  
+  tracePrintHelper->WatchAttribute("TransmissionsSent", TracePrintAttributeTypes::Integer, TracePrintCombineMode::Sum);
 
   /******************************
   * Print location of end node(s)

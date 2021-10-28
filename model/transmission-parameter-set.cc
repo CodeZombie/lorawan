@@ -6,7 +6,7 @@ namespace ns3
 {
     namespace lorawan
     {
-        
+
         NS_LOG_COMPONENT_DEFINE("TransmissionParameterSet");
 
         TransmissionParameterSet::TransmissionParameterSet()
@@ -69,7 +69,8 @@ namespace ns3
             codingRate = cr;
         }
 
-        TransmissionParameterSet::TransmissionParameterSet(TransmissionParameterSet* other) {
+        TransmissionParameterSet::TransmissionParameterSet(TransmissionParameterSet *other)
+        {
             initializeRNG();
             spreadingFactor = other->spreadingFactor;
             power = other->power;
@@ -121,7 +122,7 @@ namespace ns3
                 codingRate = parent_b->codingRate;
             }
 
-            if (randomGenerator->GetInteger(1, 100) > 50)
+            if (randomGenerator->GetInteger(1, 100) > 2)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
                 if (mutate_choice == 0)
@@ -152,7 +153,7 @@ namespace ns3
                     }
                     else
                     { //bandwidth == 250000
-                        int mutate_direction = randomGenerator->GetInteger(0, 1);
+                        int mutate_direction = randomGenerator->GetInteger(0, 2);
                         if (mutate_direction == 0)
                         {
                             bandwidth *= 2;
@@ -165,13 +166,15 @@ namespace ns3
                 }
             }
         }
-        
-        float TransmissionParameterSet::getPER() {
+
+        float TransmissionParameterSet::getPER()
+        {
             int totalTransmissions = successCount + failureCount;
-            if(totalTransmissions == 0){
+            if (totalTransmissions == 0)
+            {
                 return 0.0;
             }
-            return 1 - ((float)failureCount / (float)totalTransmissions);
+            return (float)failureCount / (float)totalTransmissions;
         }
 
         int TransmissionParameterSet::mutateValue(int originalValue, int delta, int min, int max)
@@ -216,50 +219,64 @@ namespace ns3
             //NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
             std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " PER=" << getPER() << std::endl;
         }
-        
-        void TransmissionParameterSet::onAckOrNack(bool successful) {
-            if(successful){
+
+        void TransmissionParameterSet::onAckOrNack(bool successful)
+        {
+            if (successful)
+            {
                 successCount++;
-            }else{
+            }
+            else
+            {
                 failureCount++;
             }
         }
 
-        bool TransmissionParameterSet::CompareFitness(TransmissionParameterSet *a, TransmissionParameterSet *b) {
-            return a->fitness() > b->fitness();
+        bool TransmissionParameterSet::CompareFitness(TransmissionParameterSet *a, TransmissionParameterSet *b)
+        {
+            return a->fitness() < b->fitness();
         }
 
         //  Fitness function: lower is better.
         float TransmissionParameterSet::fitness()
         {
-            float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
+            if(getPER() == 1){
+                return 1;
+            }
+
+            float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power) * 0.5f;
             return powerConsumption + (powerConsumption * getPER());
         }
 
-        float TransmissionParameterSet::PowerConsumption() {
+        float TransmissionParameterSet::PowerConsumption()
+        {
             return PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
         }
 
         float TransmissionParameterSet::PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
         {
-            //TODO: incorporate PER into this.
-
-
-
             //First, calculate the data rate of the given parameters.
-            float datarate = (spreadingfactor * (bandwidth * 4 / std::pow(2, spreadingfactor)) * (1.0f / (codingrate + 4.0f)));
+            double datarate = (spreadingfactor * (bandwidth * 4 / std::pow(2, spreadingfactor)) * (1.0f / (codingrate + 4.0f)));
 
+            double highest_datarate = (12 * (125000 * 4 / std::pow(2, 12)) * (1.0f / (4 + 4.0f)));
+            double highest_powerconsumption = (1000.0f / highest_datarate) * 14;
+
+            double lowest_datarate = (7 * (500000 * 4 / std::pow(2, 7)) * (1.0f / (1 + 4.0f)));
+            double lowest_powerconsumption = (1000.0f / lowest_datarate) * 2;
             //DataRate * Power
             //https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7070984/
             //this function will calculate the amount of power needed to transmit 1000 bytes of data.
+            //1000.0f / datarate gives us the amount of time, in seconds, it will take the phy to transmit 1000 bits of data.
             //1000 is chosen so that values are large enough such that they do not need to be expressed in scientific notation.
-            float powerconsumption = (1000.0f / datarate) * power;
-
+            double powerconsumption = (1000.0f / datarate) * power;
+            
+            //return powerconsumption;
             //Output 0-1 depending on where the power factor is between the theoretical min and max.
             //lowest  = 0.0914286
             //highest = 87.3813
             //(v - lowest) / (highest - lowest)
-            return 1.0f - (powerconsumption - 0.0914286) / (87.3813 - 0.0914286); // - (-0.2 * (!succesful));
+            ///return 1.0f - (powerconsumption - 0.0914286) / (87.3813 - 0.0914286); // - (-0.2 * (!succesful));
+            return (powerconsumption - lowest_powerconsumption) / (highest_powerconsumption - lowest_powerconsumption);
         }
 
     }

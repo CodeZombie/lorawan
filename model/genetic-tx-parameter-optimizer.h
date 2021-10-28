@@ -8,6 +8,7 @@
 // ! TODO: this value does not work yet. The AdvanceGeneration... method still relies on hardcoded 16 (4x4). Fix this.
 //          the constructor also has a 16 hardcode.
 #define GENETIC_OPTIMIZER_POPULATION_SIZE 16
+#define MAX_GENERATIONS 8
 #define MIN_SF 7
 #define MAX_SF 12
 #define MIN_TP 2
@@ -32,7 +33,7 @@ namespace ns3
 
         private:
             void AdvancePopulationOrGeneration();
-            void AddToPopulation(int offset, TransmissionParameterSet* tps);
+            bool AddToPopulation(int offset, TransmissionParameterSet* tps);
             //A vector containing all TPSs that have been tried.
             std::vector<TransmissionParameterSet*> transmissionParameterSets;
             
@@ -44,8 +45,9 @@ namespace ns3
             //(will always be between 0 and GENETIC_OPTIMIZER_POPULATION_SIZE)
             int currentTPSIndex = 0;
 
-            
+            int currentGeneration = 0;
             bool isOptimizing = true;
+            TransmissionParameterSet *MostFitTPS;
             Ptr<UniformRandomVariable> randomGenerator;
         };
     }
