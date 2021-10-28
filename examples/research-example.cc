@@ -44,7 +44,7 @@ NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
 bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic Algorithms or ADR.
 int simTimeHours = 350;                    //How long the simulation should run for.
 int NumberOfNodes = 1182;                  //The number of end-node devices in the network.
-Time transmitInterval = Hours(1);          //How frequently end-nodes transmit. 0 = Random.
+Time transmitInterval = Hours(0);          //How frequently end-nodes transmit. 0 = Random.
 Time dataCaptureInterval = Minutes(32);    //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
@@ -168,13 +168,13 @@ int main(int argc, char *argv[])
 
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(outputFolder + "/", &endDevices, dataCaptureInterval);
-  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, false);
-  tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
-  tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, false);
-  tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, false);
-  tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, false);
-  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, false);
-  tracePrintHelper->WatchAttribute("TotalPowerConsumption", TracePrintAttributeTypes::Double, false);
+  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("TotalPowerConsumption", TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum);
 
   
 

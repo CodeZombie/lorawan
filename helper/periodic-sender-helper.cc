@@ -46,7 +46,7 @@ PeriodicSenderHelper::PeriodicSenderHelper ()
   m_intervalProb->SetAttribute ("Min", DoubleValue (0));
   m_intervalProb->SetAttribute ("Max", DoubleValue (1));
 
-  m_pktSize = 10;
+  m_pktSize = 32;
   m_pktSizeRV = 0;
 }
 
@@ -91,7 +91,7 @@ PeriodicSenderHelper::InstallPriv (Ptr<Node> node) const
       double intervalProb = m_intervalProb->GetValue ();
       NS_LOG_DEBUG ("IntervalProb = " << intervalProb);
 
-      interval = Minutes(30) + Minutes(intervalProb * 120);
+      interval = Hours(12) + Hours(intervalProb * 12);
       
       /*
       // Based on TR 45.820

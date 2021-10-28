@@ -13,21 +13,20 @@
 namespace ns3 {
 namespace lorawan {
 enum TracePrintAttributeTypes { Double, Integer, Uinteger, Boolean };
+enum TracePrintCombineMode {None, Average, Sum};
 
 class TracePrintAttribute {
     public:
         std::string name;
         enum TracePrintAttributeTypes type = TracePrintAttributeTypes::Double;
-        bool average = false;
+        enum TracePrintCombineMode mode;
         std::ofstream fileStream;
 };
 
 class TracePrintHelper {
-
     public:
         TracePrintHelper(std::string prefix, NodeContainer* monitoredNodes, Time updateInterval);
-
-        void WatchAttribute(std::string name, enum TracePrintAttributeTypes type, bool average);
+        void WatchAttribute(std::string name, enum TracePrintAttributeTypes type, enum TracePrintCombineMode mode);
 
     private:
         /* Get's called every <interval> */

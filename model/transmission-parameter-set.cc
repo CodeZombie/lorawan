@@ -121,7 +121,7 @@ namespace ns3
                 codingRate = parent_b->codingRate;
             }
 
-            if (randomGenerator->GetInteger(1, 100) > 75)
+            if (randomGenerator->GetInteger(1, 100) > 50)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
                 if (mutate_choice == 0)
