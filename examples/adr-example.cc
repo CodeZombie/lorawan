@@ -203,9 +203,9 @@ int main (int argc, char *argv[])
    endDevices.Create (nDevices);
 
    //BEGIN: My stupid trace code:
-     TracePrintHelper* tracePrintHelper;
-    tracePrintHelper = new TracePrintHelper("dat_output/ADREXAMPLE_", &endDevices, Minutes(20));
-    tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
+    //TracePrintHelper* tracePrintHelper;
+    //tracePrintHelper = new TracePrintHelper("dat_output/ADREXAMPLE_", &endDevices, Minutes(20));
+    //tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
     //tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, false);
   ///END: my stupid trace code
 

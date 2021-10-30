@@ -24,6 +24,11 @@
 #include "ns3/network-server-helper.h"
 #include "ns3/forwarder-helper.h"
 
+#include "ns3/basic-energy-source-helper.h"
+#include "ns3/lora-radio-energy-model-helper.h"
+#include "ns3/file-helper.h"
+#include "ns3/names.h"
+
 #include "ns3/trace-print-helper.h"
 
 #include "ns3/command-line.h"
@@ -164,18 +169,51 @@ int main(int argc, char *argv[])
   //Enable/Disable the genetic algorithm within the MAC layer.
   macHelper.Set("UseGeneticAlgorithm", BooleanValue(UseGeneticAlgorithm));
 
-  helper.Install(phyHelper, macHelper, endDevices);
+  NetDeviceContainer endDevicesNetDevices = helper.Install(phyHelper, macHelper, endDevices);
 
+
+
+  /*******************
+   * Install Energy Model
+   * *******************/
+
+  BasicEnergySourceHelper basicSourceHelper;
+  LoraRadioEnergyModelHelper radioEnergyHelper;
+  // configure energy source
+  basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (10000)); // Energy in J
+  basicSourceHelper.Set ("BasicEnergySupplyVoltageV", DoubleValue (3.3));
+
+  radioEnergyHelper.Set ("StandbyCurrentA", DoubleValue (0.0014));
+  radioEnergyHelper.Set ("TxCurrentA", DoubleValue (0.028));
+  radioEnergyHelper.Set ("SleepCurrentA", DoubleValue (0.0000015));
+  radioEnergyHelper.Set ("RxCurrentA", DoubleValue (0.0112));
+
+  radioEnergyHelper.SetTxCurrentModel ("ns3::ConstantLoraTxCurrentModel", "TxCurrent", DoubleValue (0.028));
+
+  // install source on EDs' nodes
+  EnergySourceContainer sources = basicSourceHelper.Install (endDevices);
+  Names::Add ("/Names/EnergySource", sources.Get (0));
+
+  // install device model
+  DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install(endDevicesNetDevices, sources);
+
+  // Save Output.
+  //FileHelper fileHelper;
+  //fileHelper.ConfigureFile (outputFolder + "/" + "remaining_energy", FileAggregator::SPACE_SEPARATED);
+  //fileHelper.WriteProbe ("ns3::DoubleProbe", "/Names/EnergySource/RemainingEnergy", "Output");
+
+  /************** Setup trace prints *********** */
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(outputFolder + "/", &endDevices, dataCaptureInterval);
-  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("TotalPowerConsumption", TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum);
-  tracePrintHelper->WatchAttribute("TransmissionsSent", TracePrintAttributeTypes::Integer, TracePrintCombineMode::Sum);
+  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  ////////tracePrintHelper->WatchAttribute("TotalPowerConsumption", TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum);
+  tracePrintHelper->WatchAttribute("TransmissionsSent", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::Sum);
+  tracePrintHelper->WatchAttribute("TotalEnergyConsumption", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::EnergyModel, TracePrintCombineMode::Sum);
 
   /******************************
   * Print location of end node(s)
@@ -228,6 +266,7 @@ int main(int argc, char *argv[])
   ApplicationContainer appContainer = appHelper.Install(endDevices);
   appContainer.Start(Seconds(0));
   appContainer.Stop(Hours(simTimeHours));
+
 
   /**************************
    *  Create Network Server  *

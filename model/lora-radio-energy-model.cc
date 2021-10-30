@@ -67,6 +67,11 @@ LoraRadioEnergyModel::GetTypeId (void)
                      "Total energy consumption of the radio device.",
                      MakeTraceSourceAccessor (&LoraRadioEnergyModel::m_totalEnergyConsumption),
                      "ns3::TracedValueCallback::Double")
+    .AddAttribute ("TotalEnergyConsumption",
+                    "Total energy consumption of the radio device.",
+                    DoubleValue (0.0),
+                    MakeDoubleAccessor (&LoraRadioEnergyModel::m_totalEnergyConsumption),
+                    MakeDoubleChecker<double> ())
   ;
   return tid;
 }

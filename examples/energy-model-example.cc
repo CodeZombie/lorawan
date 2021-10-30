@@ -178,6 +178,8 @@ int main (int argc, char *argv[])
   fileHelper.ConfigureFile ("battery-level", FileAggregator::SPACE_SEPARATED);
   fileHelper.WriteProbe ("ns3::DoubleProbe", "/Names/EnergySource/RemainingEnergy", "Output");
 
+  
+
 
   /****************
   *  Simulation  *

@@ -7,6 +7,8 @@
 #define TRACE_PRINT_HELPER_H
 
 #include "ns3/lora-helper.h"
+#include "ns3/basic-energy-source-helper.h"
+#include "ns3/lora-radio-energy-model-helper.h"
 #include <vector>
 #include <fstream>
 
@@ -14,20 +16,21 @@ namespace ns3 {
 namespace lorawan {
 enum TracePrintAttributeTypes { Double, Integer, Uinteger, Boolean };
 enum TracePrintCombineMode {None, Average, Sum};
+enum TracePrintAttributeLocation {MAC, EnergyModel};
 
 class TracePrintAttribute {
     public:
         std::string name;
         enum TracePrintAttributeTypes type = TracePrintAttributeTypes::Double;
         enum TracePrintCombineMode mode;
+        enum TracePrintAttributeLocation location;
         std::ofstream fileStream;
 };
 
 class TracePrintHelper {
     public:
         TracePrintHelper(std::string prefix, NodeContainer* monitoredNodes, Time updateInterval);
-        void WatchAttribute(std::string name, enum TracePrintAttributeTypes type, enum TracePrintCombineMode mode);
-
+        void WatchAttribute(std::string name, enum TracePrintAttributeTypes type, enum TracePrintAttributeLocation location, enum TracePrintCombineMode mode);
     private:
         /* Get's called every <interval> */
         static void update(NodeContainer *monitoredNodes, std::vector<TracePrintAttribute*>* tracePrintAttributes, Time updateInterval);

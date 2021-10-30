@@ -10,19 +10,17 @@ namespace lorawan {
         Simulator::Schedule(updateInterval, &(this->update), this->monitoredNodes, &this->tracePrintAttributes, updateInterval);
     }
 
-    void TracePrintHelper::WatchAttribute(std::string name, enum TracePrintAttributeTypes type, enum TracePrintCombineMode mode) {
+    void TracePrintHelper::WatchAttribute(std::string name, enum TracePrintAttributeTypes type, enum TracePrintAttributeLocation location, enum TracePrintCombineMode mode) {
         TracePrintAttribute *tracePrintAttribute = new TracePrintAttribute();
         tracePrintAttribute->name = name;
         tracePrintAttribute->type = type;
         tracePrintAttribute->mode = mode;
+        tracePrintAttribute->location = location;
         tracePrintAttribute->fileStream.open(this->prefix + name + ".dat");
         this->tracePrintAttributes.push_back(tracePrintAttribute);
     }
 
     void TracePrintHelper::update(NodeContainer *monitoredNodes, std::vector<TracePrintAttribute*>* tracePrintAttributes, Time updateInterval) {
-
-
-
         for (std::vector<TracePrintAttribute*>::iterator attribute = tracePrintAttributes->begin(); attribute != tracePrintAttributes->end(); ++attribute) {
             double doubleSumValue = 0;
             uint32_t intSumValue = 0;
@@ -30,7 +28,12 @@ namespace lorawan {
             for (NodeContainer::Iterator j = monitoredNodes->Begin (); j != monitoredNodes->End (); ++j) {
                 if((*attribute)->type == TracePrintAttributeTypes::Double) {
                     DoubleValue value;
-                    (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
+                    if((*attribute)->location == TracePrintAttributeLocation::MAC){
+                        (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->GetAttribute((*attribute)->name, value); 
+                    }else if((*attribute)->location == TracePrintAttributeLocation::EnergyModel){
+                        std::cout << (*j)->GetDevice(0)->GetObject<LoraRadioEnergyModel>() << std::endl;
+                        (*j)->GetDevice(0)->GetObject<LoraRadioEnergyModel>()->GetAttribute((*attribute)->name, value);
+                    }
                     if((*attribute)->mode == TracePrintCombineMode::Sum) {
                         doubleSumValue += value.Get();
                     }else{
