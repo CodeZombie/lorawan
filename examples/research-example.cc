@@ -23,7 +23,7 @@
 #include "ns3/one-shot-sender-helper.h"
 #include "ns3/network-server-helper.h"
 #include "ns3/forwarder-helper.h"
-
+#include "ns3/basic-energy-source.h"
 #include "ns3/basic-energy-source-helper.h"
 #include "ns3/lora-radio-energy-model-helper.h"
 #include "ns3/file-helper.h"
@@ -39,6 +39,12 @@ using namespace ns3;
 using namespace lorawan;
 
 NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
+
+//Test
+
+void PrintEnergyRemaining(double a, double b){
+  std::cout << "Energy: " << a << " " << b << std::endl;
+}
 
 /*******************************
              CONFIG            *
@@ -191,29 +197,30 @@ int main(int argc, char *argv[])
   radioEnergyHelper.SetTxCurrentModel ("ns3::ConstantLoraTxCurrentModel", "TxCurrent", DoubleValue (0.028));
 
   // install source on EDs' nodes
-  EnergySourceContainer sources = basicSourceHelper.Install (endDevices);
-  Names::Add ("/Names/EnergySource", sources.Get (0));
+  EnergySourceContainer energySources = basicSourceHelper.Install (endDevices);
 
   // install device model
-  DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install(endDevicesNetDevices, sources);
-
-  // Save Output.
-  //FileHelper fileHelper;
-  //fileHelper.ConfigureFile (outputFolder + "/" + "remaining_energy", FileAggregator::SPACE_SEPARATED);
-  //fileHelper.WriteProbe ("ns3::DoubleProbe", "/Names/EnergySource/RemainingEnergy", "Output");
+  DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install(endDevicesNetDevices, energySources);
 
   /************** Setup trace prints *********** */
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(outputFolder + "/", &endDevices, dataCaptureInterval);
-  tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
+  /*tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
   tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
   tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
   tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
   tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  ////////tracePrintHelper->WatchAttribute("TotalPowerConsumption", TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum);
-  tracePrintHelper->WatchAttribute("TransmissionsSent", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::Sum);
-  tracePrintHelper->WatchAttribute("TotalEnergyConsumption", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::EnergyModel, TracePrintCombineMode::Sum);
+  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);*/
+  //tracePrintHelper->WatchAttribute("TransmissionsSent", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::Sum);
+  
+  //Setup watchers.
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("RemainingEnergy", &energySources, TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeTypes::Integer, TracePrintCombineMode::Sum, outputFolder + "/"));
+
+  
+
+  
+  
 
   /******************************
   * Print location of end node(s)

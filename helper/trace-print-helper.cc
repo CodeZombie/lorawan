@@ -2,7 +2,9 @@
 
 namespace ns3 {
 namespace lorawan {
-
+    void PrintEnergyRemaining(double a, double b){
+        std::cout << "WOW: " << a << " " << b << std::endl;
+    }
     TracePrintHelper::TracePrintHelper(std::string prefix, NodeContainer* monitoredNodes, Time updateInterval) {
         this->monitoredNodes = monitoredNodes;
         this->prefix = prefix;
@@ -16,11 +18,33 @@ namespace lorawan {
         tracePrintAttribute->type = type;
         tracePrintAttribute->mode = mode;
         tracePrintAttribute->location = location;
+        
         tracePrintAttribute->fileStream.open(this->prefix + name + ".dat");
         this->tracePrintAttributes.push_back(tracePrintAttribute);
     }
 
+
+    TracePrintTraceSource* TracePrintHelper::ConnectTraceSource(std::string path, enum TracePrintAttributeTypes type, enum TracePrintCombineMode combineMode) {
+        TracePrintTraceSource *tracePrintTraceSource = new TracePrintTraceSource();
+        tracePrintTraceSource->path = path;
+        tracePrintTraceSource->type = type;
+        tracePrintTraceSource->combineMode = combineMode;
+        this->tracePrintTraceSources.push_back(tracePrintTraceSource);
+        return tracePrintTraceSource;
+    }
+
+    void TracePrintHelper::AddAttributeWatcher(AttributeWatcher* watcher) {
+        this->attributeWatchers.push_back(watcher);
+    }
+
+
     void TracePrintHelper::update(NodeContainer *monitoredNodes, std::vector<TracePrintAttribute*>* tracePrintAttributes, Time updateInterval) {
+        for(auto watcher : this->attributeWatchers) {
+            watcher->ProbeAndSave();
+        }
+
+
+        return;
         for (std::vector<TracePrintAttribute*>::iterator attribute = tracePrintAttributes->begin(); attribute != tracePrintAttributes->end(); ++attribute) {
             double doubleSumValue = 0;
             uint32_t intSumValue = 0;
