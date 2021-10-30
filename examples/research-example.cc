@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
   macHelper.SetDeviceType(LorawanMacHelper::ED_A);
 
   //TODO: Our genetic algo should eventually turn confirmation off.
-  macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
+  //macHelper.Set("MType", EnumValue(LorawanMacHeader::CONFIRMED_DATA_UP));
 
   if (!UseGeneticAlgorithm)
   {
@@ -274,12 +274,12 @@ int main(int argc, char *argv[])
   tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
   //Setup watchers.
   tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TotalEnergyConsumption", &deviceModels, TracePrintAttributeType::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Integer, TracePrintCombineMode::Sum, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Uinteger, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Integer, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Integer, TracePrintCombineMode::Sum, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Uinteger, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Integer, TracePrintCombineMode::None, outputFolder + "/"));
   tracePrintHelper->Start();
 
   /****************

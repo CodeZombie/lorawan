@@ -147,6 +147,11 @@ namespace ns3
 
       if (useGeneticParamaterSelection)
       {
+        if(geneticTXParameterOptimizer->IsOptimizing()) {
+          SetMType(LorawanMacHeader::CONFIRMED_DATA_UP);
+        }else{
+          SetMType(LorawanMacHeader::UNCONFIRMED_DATA_UP);
+        }
         geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
         m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
         //TotalPowerConsumption += geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->PowerConsumption();

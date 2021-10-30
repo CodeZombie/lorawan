@@ -30,6 +30,7 @@ namespace ns3
             TransmissionParameterSet *GetCurrentTransmissionParameterSet();
             void SetCurrentTransmissionParameterSetSuccess(bool successful);
             void StopOptimizing();
+            bool IsOptimizing();
 
         private:
             void AdvancePopulationOrGeneration();

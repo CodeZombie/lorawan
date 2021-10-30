@@ -58,6 +58,11 @@ namespace ns3
             
         }
 
+        bool GeneticTXParameterOptimizer::IsOptimizing()
+        {
+            return isOptimizing;
+        }
+
         void GeneticTXParameterOptimizer::AdvancePopulationOrGeneration()
         {
             if(!isOptimizing){
