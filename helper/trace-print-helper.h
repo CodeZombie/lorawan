@@ -15,23 +15,14 @@
 
 namespace ns3 {
 namespace lorawan {
-enum TracePrintAttributeTypes { Double, Integer, Uinteger, Boolean };
+enum TracePrintAttributeType { Double, Integer, Uinteger, Boolean };
 enum TracePrintCombineMode {None, Average, Sum};
-enum TracePrintAttributeLocation {MAC, EnergyModel};
 
-class TracePrintAttribute {
-    public:
-        std::string name;
-        enum TracePrintAttributeTypes type = TracePrintAttributeTypes::Double;
-        enum TracePrintCombineMode mode;
-        enum TracePrintAttributeLocation location;
-        std::ofstream fileStream;
-};
 
 class AttributeWatcher {
     public:
         //The Constructor which takes an EnergySourceContainer.
-        AttributeWatcher(std::string attributeName, ns3::EnergySourceContainer *nodeContainer, enum TracePrintAttributeTypes type, enum TracePrintCombineMode mode, std::string prefix) {
+        AttributeWatcher(std::string attributeName, ns3::DeviceEnergyModelContainer *nodeContainer, enum TracePrintAttributeType type, enum TracePrintCombineMode mode, std::string prefix) {
             this->attributeName = attributeName;
             this->type = type;
             this->mode = mode;
@@ -42,7 +33,7 @@ class AttributeWatcher {
         }
 
         //The construct which takes a generic NodeContainer.
-        AttributeWatcher(std::string attributeName, ns3::NodeContainer *nodeContainer, enum TracePrintAttributeTypes type, enum TracePrintCombineMode mode, std::string prefix) {
+        AttributeWatcher(std::string attributeName, ns3::NodeContainer *nodeContainer, enum TracePrintAttributeType type, enum TracePrintCombineMode mode, std::string prefix) {
             this->attributeName = attributeName;
             this->type = type;
             this->mode = mode;
@@ -53,11 +44,11 @@ class AttributeWatcher {
         }
 
         //The construct which takes a device path.
-        AttributeWatcher(std::string attributeName, std::string path, enum TracePrintAttributeTypes type, enum TracePrintCombineMode mode, std::string prefix) {
+        AttributeWatcher(std::string attributeName, std::string path, enum TracePrintAttributeType type, enum TracePrintCombineMode mode, std::string prefix) {
             this->attributeName = attributeName;
             this->type = type;
             this->mode = mode;
-            Config::MatchContainer m = Config::LookupMatches(path); // "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac"
+            Config::MatchContainer m = Config::LookupMatches(path);
             for (Config::MatchContainer::Iterator i = m.Begin(); i != m.End(); ++i)
             {
                 this->watchedObjects.push_back(*i);
@@ -70,70 +61,79 @@ class AttributeWatcher {
         }
 
         void ProbeAndSave() {
-            if (this->type == TracePrintAttributeTypes::Double) {
+            if (this->type == TracePrintAttributeType::Double) {
                 double sum = 0;
                 for (Ptr<Object> object : this->watchedObjects) {
                     DoubleValue value = 0;
                     object->GetAttribute(this->attributeName, value);
                     if(this->mode == TracePrintCombineMode::None) {             //Save to file immediately.
-                        this->fileStream << ns3::Simulator::Now().GetMinutes() << " " << value.Get() << std::endl;
+                        this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
                     }
                     sum += value.Get();
                 }
                 if(this->mode == TracePrintCombineMode::Average) {    //Store all values in sum and divide by number of objects.
-                    this->fileStream << ns3::Simulator::Now().GetMinutes() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
                 }else if(this->mode == TracePrintCombineMode::Sum) {        //Store all values in sum but don't divide.
-                    this->fileStream << ns3::Simulator::Now().GetMinutes() << " " << sum << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                }
+            }else if(this->type == TracePrintAttributeType::Integer) {
+                int sum = 0;
+                for (Ptr<Object> object : this->watchedObjects) {
+                    IntegerValue value = 0;
+                    
+                    object->GetAttribute(this->attributeName, value);
+                    if(this->mode == TracePrintCombineMode::None) {             //Save to file immediately.
+                        this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                    }
+                    sum += value.Get();
+                }
+                if(this->mode == TracePrintCombineMode::Average) {    //Store all values in sum and divide by number of objects.
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
+                }else if(this->mode == TracePrintCombineMode::Sum) {        //Store all values in sum but don't divide.
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                }
+            }else if(this->type == TracePrintAttributeType::Uinteger) {
+                uint32_t  sum = 0;
+                for (Ptr<Object> object : this->watchedObjects) {
+                    UintegerValue value = 0;
+                    object->GetAttribute(this->attributeName, value);
+                    if(this->mode == TracePrintCombineMode::None) {             //Save to file immediately.
+                        this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                    }
+                    sum += value.Get();
+                }
+                if(this->mode == TracePrintCombineMode::Average) {    //Store all values in sum and divide by number of objects.
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
+                }else if(this->mode == TracePrintCombineMode::Sum) {        //Store all values in sum but don't divide.
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
                 }
             }
         }
 
         std::string attributeName;
-        enum TracePrintAttributeTypes type;
+        enum TracePrintAttributeType type;
         enum TracePrintCombineMode mode;
         std::vector<ns3::Ptr<ns3::Object>> watchedObjects;
         std::ofstream fileStream;
 };
 
-class TracePrintTraceSource {
-    public:
-    std::string path; //"/Names/EnergySource/RemainingEnergy"
-    enum TracePrintAttributeTypes type;
-    enum TracePrintCombineMode combineMode;
-    std::ofstream fileStream;
-    double doubleCombinedValue;
-    int intCombinedValue;
-    void RegisterCallback(ns3::Ptr<ns3::Object> o) {
-        o->TraceConnectWithoutContext(path, MakeCallback(&TracePrintTraceSource::callback, this));
-    }
-    void callback(double a, double b) {
-        std::cout << a << " " << b << std::endl;
-    }
-};
-
 class TracePrintHelper {
     public:
-        TracePrintHelper(std::string prefix, NodeContainer* monitoredNodes, Time updateInterval);
-        void WatchAttribute(std::string name, enum TracePrintAttributeTypes type, enum TracePrintAttributeLocation location, enum TracePrintCombineMode mode);
-        TracePrintTraceSource* ConnectTraceSource(std::string path, enum TracePrintAttributeTypes type, enum TracePrintCombineMode combineMode);
-
+        TracePrintHelper(Time updateInterval);
         void AddAttributeWatcher(AttributeWatcher* watcher);
+        void Start();
     private:
         /* Get's called every <interval> */
-        static void update(NodeContainer *monitoredNodes, std::vector<TracePrintAttribute*>* tracePrintAttributes, Time updateInterval);
-
-        /* A pointer to the nodes inside the simulation that we want to monitor. */
-        NodeContainer *monitoredNodes;
+        static void update(std::vector<AttributeWatcher*> attributeWatchers, Time updateInterval);
 
         /* The string-identifies of attributes to watch inside the Mac Layer of the end-nodes */
-        std::vector<TracePrintAttribute*> tracePrintAttributes;
-        std::vector<TracePrintTraceSource*> tracePrintTraceSources;
+        std::vector<AttributeWatcher*> attributeWatchers;
+
+        //The prefix to use for all output files. (Use this to set a folder or something)
         std::string prefix;
 
-
-        std::vector<AttributeWatcher*> attributeWatchers;
+        Time updateInterval;
 };
-
 }}
 
 #endif

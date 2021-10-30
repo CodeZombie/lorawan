@@ -56,7 +56,7 @@ bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic 
 int simTimeHours = 350;                    //How long the simulation should run for.
 int NumberOfNodes = 1182;                  //The number of end-node devices in the network.
 Time transmitInterval = Hours(0);          //How frequently end-nodes transmit. 0 = Random.
-Time dataCaptureInterval = Minutes(32);    //The time in between data sampling.
+Time dataCaptureInterval = Hours(2);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
 double maxRandomLoss = 0;                  //The maximum amount of random loss that can be
@@ -202,26 +202,6 @@ int main(int argc, char *argv[])
   // install device model
   DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install(endDevicesNetDevices, energySources);
 
-  /************** Setup trace prints *********** */
-  TracePrintHelper *tracePrintHelper;
-  tracePrintHelper = new TracePrintHelper(outputFolder + "/", &endDevices, dataCaptureInterval);
-  /*tracePrintHelper->WatchAttribute("FailedTransmissionCount", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("DataRate", TracePrintAttributeTypes::Uinteger, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("UseGeneticAlgorithm", TracePrintAttributeTypes::Boolean, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("LastFitnessLevel", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("PacketErrorRate", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);
-  tracePrintHelper->WatchAttribute("LastNPSR", TracePrintAttributeTypes::Double, TracePrintAttributeLocation::MAC, TracePrintCombineMode::None);*/
-  //tracePrintHelper->WatchAttribute("TransmissionsSent", TracePrintAttributeTypes::Integer, TracePrintAttributeLocation::MAC, TracePrintCombineMode::Sum);
-  
-  //Setup watchers.
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("RemainingEnergy", &energySources, TracePrintAttributeTypes::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeTypes::Integer, TracePrintCombineMode::Sum, outputFolder + "/"));
-
-  
-
-  
-  
-
   /******************************
   * Print location of end node(s)
   * *****************************/
@@ -286,6 +266,21 @@ int main(int argc, char *argv[])
 
   ForwarderHelper forHelper = ForwarderHelper();
   forHelper.Install(gateways);
+
+  /**************************************
+   *  Setup Tracing and Data Collection  *
+   **************************************/
+  TracePrintHelper *tracePrintHelper;
+  tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
+  //Setup watchers.
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TotalEnergyConsumption", &deviceModels, TracePrintAttributeType::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Integer, TracePrintCombineMode::Sum, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Uinteger, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac", TracePrintAttributeType::Integer, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->Start();
 
   /****************
   *  Simulation  *
