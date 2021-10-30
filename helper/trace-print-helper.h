@@ -15,7 +15,7 @@
 
 namespace ns3 {
 namespace lorawan {
-enum TracePrintAttributeType { Double, Integer, Uinteger, Boolean };
+enum TracePrintAttributeType { Double, Integer, Uinteger, Boolean, Enum };
 enum TracePrintCombineMode {None, Average, Sum};
 
 
@@ -107,6 +107,12 @@ class AttributeWatcher {
                 }else if(this->mode == TracePrintCombineMode::Sum) {        //Store all values in sum but don't divide.
                     this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
                 }
+            }else if(this->type == TracePrintAttributeType::Enum) {
+                for (Ptr<Object> object : this->watchedObjects) {
+                    EnumValue value = 0;
+                    object->GetAttribute(this->attributeName, value);
+                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                }
             }
         }
 
@@ -124,10 +130,10 @@ class TracePrintHelper {
         void Start();
     private:
         /* Get's called every <interval> */
-        static void update(std::vector<AttributeWatcher*> attributeWatchers, Time updateInterval);
+        static void update(std::vector<AttributeWatcher*>* attributeWatchers, Time updateInterval);
 
         /* The string-identifies of attributes to watch inside the Mac Layer of the end-nodes */
-        std::vector<AttributeWatcher*> attributeWatchers;
+        std::vector<AttributeWatcher*>* attributeWatchers;
 
         //The prefix to use for all output files. (Use this to set a folder or something)
         std::string prefix;

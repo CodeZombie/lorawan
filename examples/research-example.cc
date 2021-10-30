@@ -202,18 +202,6 @@ int main(int argc, char *argv[])
   // install device model
   DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install(endDevicesNetDevices, energySources);
 
-  /******************************
-  * Print location of end node(s)
-  * *****************************/
-  std::ofstream locationFile;
-  locationFile.open(outputFolder + "/endDeviceLocations.dat");
-  for (NodeContainer::Iterator j = endDevices.Begin(); j != endDevices.End(); ++j)
-  {
-    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
-    Vector position = mobility->GetPosition();
-    locationFile << position.x << " " << position.y << std::endl;
-  }
-
   /*********************
   *  Create Gateways  *
   *********************/
@@ -231,18 +219,6 @@ int main(int argc, char *argv[])
   phyHelper.SetDeviceType(LoraPhyHelper::GW);
   macHelper.SetDeviceType(LorawanMacHelper::GW);
   helper.Install(phyHelper, macHelper, gateways);
-
-  /**************************
-   * Print location of gateway node(s)
-   * ************************/
-  std::ofstream gwlocationFile;
-  gwlocationFile.open(outputFolder + "/gatewayLocations.dat");
-  for (NodeContainer::Iterator j = gateways.Begin(); j != gateways.End(); ++j)
-  {
-    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
-    Vector position = mobility->GetPosition();
-    gwlocationFile << position.x << " " << position.y << std::endl;
-  }
 
   /*********************************************
   *  Install applications on the end devices  *
@@ -267,6 +243,31 @@ int main(int argc, char *argv[])
   ForwarderHelper forHelper = ForwarderHelper();
   forHelper.Install(gateways);
 
+
+  /**************************
+   * Print location of gateway node(s)
+   * ************************/
+  std::ofstream gwlocationFile;
+  gwlocationFile.open(outputFolder + "/gatewayLocations.dat");
+  for (NodeContainer::Iterator j = gateways.Begin(); j != gateways.End(); ++j)
+  {
+    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
+    Vector position = mobility->GetPosition();
+    gwlocationFile << position.x << " " << position.y << std::endl;
+  }
+  
+    /******************************
+  * Print location of end node(s)
+  * *****************************/
+  std::ofstream locationFile;
+  locationFile.open(outputFolder + "/endDeviceLocations.dat");
+  for (NodeContainer::Iterator j = endDevices.Begin(); j != endDevices.End(); ++j)
+  {
+    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
+    Vector position = mobility->GetPosition();
+    locationFile << position.x << " " << position.y << std::endl;
+  }
+
   /**************************************
    *  Setup Tracing and Data Collection  *
    **************************************/
@@ -280,6 +281,7 @@ int main(int argc, char *argv[])
   tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Uinteger, TracePrintCombineMode::None, outputFolder + "/"));
   tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
   tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Integer, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Enum, TracePrintCombineMode::None, outputFolder + "/"));
   tracePrintHelper->Start();
 
   /****************
