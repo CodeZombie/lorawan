@@ -17,18 +17,14 @@ namespace ns3
             //power: 2, 4, 6, 8, 10, 12, 14, 16
             power = randomGenerator->GetInteger(1, 7) * 2; //8
             //bandwidth: 125000, 250000, 500000
-            int choice = randomGenerator->GetInteger(1, 3); /// 2????
+            int choice = randomGenerator->GetInteger(1, 2); /// 2????
             if (choice == 1)
             {
                 bandwidth = 125000;
             }
-            else if (choice == 2)
-            {
-                bandwidth = 250000;
-            }
             else
             {
-                bandwidth = 500000;
+                bandwidth = 250000;
             }
             //coding rate: 1 (4/5), 2 (4/6), 3 (4/7), 4 (4/8)
             codingRate = randomGenerator->GetInteger(1, 4);
@@ -145,23 +141,14 @@ namespace ns3
                     //mutate bw
                     if (bandwidth == 125000)
                     {
-                        bandwidth *= 2;
+                        bandwidth = 250000;
                     }
-                    else if (bandwidth == 500000)
+                    else if (bandwidth == 250000)
                     {
-                        bandwidth /= 2;
+                        bandwidth = 125000;
                     }
-                    else
-                    { //bandwidth == 250000
-                        int mutate_direction = randomGenerator->GetInteger(0, 2);
-                        if (mutate_direction == 0)
-                        {
-                            bandwidth *= 2;
-                        }
-                        else
-                        {
-                            bandwidth /= 2;
-                        }
+                    else if (bandwidth == 500000){
+                        std::cout << "Bandwidth = 500,000. This should not happen." << std::endl;
                     }
                 }
             }
@@ -261,7 +248,7 @@ namespace ns3
             double highest_datarate = (12 * (125000 * 4 / std::pow(2, 12)) * (1.0f / (4 + 4.0f)));
             double highest_powerconsumption = (1000.0f / highest_datarate) * 14;
 
-            double lowest_datarate = (7 * (500000 * 4 / std::pow(2, 7)) * (1.0f / (1 + 4.0f)));
+            double lowest_datarate = (7 * (250000 * 4 / std::pow(2, 7)) * (1.0f / (1 + 4.0f)));
             double lowest_powerconsumption = (1000.0f / lowest_datarate) * 2;
             //DataRate * Power
             //https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7070984/

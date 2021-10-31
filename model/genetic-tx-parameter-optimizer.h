@@ -14,7 +14,7 @@
 #define MIN_TP 2
 #define MAX_TP 14
 #define MIN_BW 125000
-#define MAX_BW 500000
+#define MAX_BW 250000
 #define MIN_CR 1
 #define MAX_CR 4
 

@@ -34,7 +34,7 @@ namespace ns3
             transmissionParameterSets.push_back(new TransmissionParameterSet(12, 2, 250000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(7, 12, 125000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 250000, 3));
-            transmissionParameterSets.push_back(new TransmissionParameterSet(12, 12, 500000, 4));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(12, 12, 125000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 8, 250000, 3));
         }
 

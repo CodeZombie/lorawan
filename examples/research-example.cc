@@ -218,6 +218,7 @@ int main(int argc, char *argv[])
   // Create a netdevice for each gateway
   phyHelper.SetDeviceType(LoraPhyHelper::GW);
   macHelper.SetDeviceType(LorawanMacHelper::GW);
+  macHelper.SetRegion (LorawanMacHelper::EU);
   helper.Install(phyHelper, macHelper, gateways);
 
   /*********************************************
