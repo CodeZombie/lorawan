@@ -29,6 +29,7 @@
 #include "ns3/file-helper.h"
 #include "ns3/names.h"
 
+#include "ns3/value-watcher.h"
 #include "ns3/trace-print-helper.h"
 
 #include "ns3/command-line.h"
@@ -275,14 +276,15 @@ int main(int argc, char *argv[])
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
   //Setup watchers.
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TotalEnergyConsumption", &deviceModels, TracePrintAttributeType::Double, TracePrintCombineMode::Sum, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Integer, TracePrintCombineMode::Sum, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Uinteger, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Double, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Integer, TracePrintCombineMode::None, outputFolder + "/"));
-  tracePrintHelper->AddAttributeWatcher(new AttributeWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", TracePrintAttributeType::Enum, TracePrintCombineMode::None, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalEnergyConsumption", &deviceModels, ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Uinteger, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketsSent", "/NodeList/*/ApplicationList/*/$ns3::PeriodicSender", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::TraceSource,  outputFolder + "/"));
   tracePrintHelper->Start();
 
   /****************
@@ -301,3 +303,14 @@ int main(int argc, char *argv[])
   return 0;
 }
 
+//Take a dataframe of continuous variables and discretize it
+std::vector<double> discretize(std::vector<double> dataframe, int numBins)
+{
+  std::vector<double> discretized;
+  double binSize = (dataframe.back() - dataframe.front()) / numBins;
+  for (std::vector<double>::iterator it = dataframe.begin(); it != dataframe.end(); ++it)
+  {
+    discretized.push_back(std::floor(*it / binSize) * binSize);
+  }
+  return discretized;
+}

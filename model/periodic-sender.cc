@@ -43,7 +43,14 @@ PeriodicSender::GetTypeId (void)
                    TimeValue (Seconds (0)),
                    MakeTimeAccessor (&PeriodicSender::GetInterval,
                                      &PeriodicSender::SetInterval),
-                   MakeTimeChecker ());
+                   MakeTimeChecker ())
+    .AddAttribute ("ApplicationPacketsSent", "The number of packets sent by this app",
+                   IntegerValue (0),
+                   MakeIntegerAccessor (&PeriodicSender::m_nPacketsSent),
+                   MakeIntegerChecker<int32_t> ())
+    .AddTraceSource("PacketsSent", "The number of packets sent by this app",
+                    MakeTraceSourceAccessor(&PeriodicSender::m_nPacketsSent),
+                    "ns3::TracedValueCallback::Int32");
   // .AddAttribute ("PacketSizeRandomVariable", "The random variable that determines the shape of the packet size, in bytes",
   //                StringValue ("ns3::UniformRandomVariable[Min=0,Max=10]"),
   //                MakePointerAccessor (&PeriodicSender::m_pktSizeRV),
@@ -123,7 +130,7 @@ PeriodicSender::SendPacket (void)
   // Schedule the next SendPacket event
   m_sendEvent = Simulator::Schedule (m_interval, &PeriodicSender::SendPacket,
                                      this);
-
+  m_nPacketsSent++;
   NS_LOG_DEBUG ("Sent a packet of size " << packet->GetSize ());
 }
 

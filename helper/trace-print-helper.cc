@@ -6,24 +6,24 @@ namespace lorawan {
     TracePrintHelper::TracePrintHelper(Time updateInterval) {
         //set the schedular to call update();
         this->updateInterval = updateInterval;
-        attributeWatchers = new std::vector<AttributeWatcher*>();
+        valueWatchers = new std::vector<ValueWatcher*>();
     }
 
     void TracePrintHelper::Start() {
-        Simulator::Schedule(updateInterval, &(this->update), this->attributeWatchers, this->updateInterval);
+        Simulator::Schedule(updateInterval, &(this->update), this->valueWatchers, this->updateInterval);
     }
 
-    void TracePrintHelper::AddAttributeWatcher(AttributeWatcher* watcher) {
-        this->attributeWatchers->push_back(watcher);
+    void TracePrintHelper::AddValueWatcher(ValueWatcher* watcher) {
+        this->valueWatchers->push_back(watcher);
     }
 
 
-    void TracePrintHelper::update(std::vector<AttributeWatcher*> *attributeWatchers, Time updateInterval) {
-        for(auto watcher : *attributeWatchers) {
+    void TracePrintHelper::update(std::vector<ValueWatcher*> *valueWatchers, Time updateInterval) {
+        for(auto watcher : *valueWatchers) {
             watcher->ProbeAndSave();
         }
 
-        Simulator::Schedule(updateInterval, TracePrintHelper::update, attributeWatchers, updateInterval);
+        Simulator::Schedule(updateInterval, TracePrintHelper::update, valueWatchers, updateInterval);
     }
 
 }}

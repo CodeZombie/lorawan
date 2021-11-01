@@ -25,6 +25,7 @@
 #include "ns3/nstime.h"
 #include "ns3/lorawan-mac.h"
 #include "ns3/attribute.h"
+#include "ns3/traced-value.h"
 
 namespace ns3 {
 namespace lorawan {
@@ -110,6 +111,12 @@ private:
    * The random variable that adds bytes to the packet size
    */
   Ptr<RandomVariableStream> m_pktSizeRV;
+
+  /**
+   * The traced total number of packets sents
+   */
+  TracedValue<int32_t> m_nPacketsSent;
+  
 
 
 };
