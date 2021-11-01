@@ -1,7 +1,10 @@
 #ifndef TRANSMISSION_PARAMETER_SET_H
 #define TRANSMISSION_PARAMETER_SET_H
+#include "ns3/object.h"
 #include "ns3/log.h"
 #include "ptr.h"
+#include "ns3/traced-value.h"
+#include "ns3/trace-source-accessor.h"
 #include "random-variable-stream.h"
 #include <math.h>
 namespace ns3
@@ -9,19 +12,20 @@ namespace ns3
     namespace lorawan
     {
 
-        class TransmissionParameterSet
+        class TransmissionParameterSet : public Object
         {
         public:
+            static TypeId GetTypeId (void);
             TransmissionParameterSet();
-            TransmissionParameterSet(TransmissionParameterSet* other);
+            TransmissionParameterSet(Ptr<TransmissionParameterSet> other);
             TransmissionParameterSet(int sf, int pow, int bw, int cr);
-            TransmissionParameterSet(TransmissionParameterSet *parent_a, TransmissionParameterSet *parent_b);
+            TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b);
 
             float getPER();
             int mutateValue(int originalValue, int delta, int min, int max);
             void Print();
             float fitness();
-            bool isEqual(TransmissionParameterSet *other);
+            bool isEqual(Ptr<TransmissionParameterSet> other);
             int dataRate();
             void onAckOrNack(bool successful);
             float PowerConsumption();
@@ -36,11 +40,14 @@ namespace ns3
             int successCount = 0;
             int failureCount = 0;
 
-            static bool CompareFitness(TransmissionParameterSet *a, TransmissionParameterSet *b);
+            static bool CompareFitness(Ptr<TransmissionParameterSet> a, Ptr<TransmissionParameterSet> b);
+
+            double mutationRate;
 
         private:
             Ptr<UniformRandomVariable> randomGenerator;
             void initializeRNG();
+            
         };
 
     }

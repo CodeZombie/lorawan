@@ -86,8 +86,13 @@ namespace ns3
         }
 
         void ValueWatcher::StoreDoubleValue(double old_value, double new_value)
-        {
-            this->fileStream << ns3::Simulator::Now().GetHours() << " " << new_value << std::endl;
+        {   
+            double val = new_value;
+            if(this->mode == Sum){
+                this->TraceSourceSumDouble += (new_value - old_value);
+                val = this->TraceSourceSumDouble;
+            }
+            this->fileStream << ns3::Simulator::Now().GetHours() << " " << val << std::endl;
         }
 
         void ValueWatcher::ProbeAndSave()

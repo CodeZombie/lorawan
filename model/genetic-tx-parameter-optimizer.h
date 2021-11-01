@@ -4,7 +4,6 @@
 #include <algorithm>
 #include "ns3/transmission-parameter-set.h"
 #include "ns3/log.h"
-
 // ! TODO: this value does not work yet. The AdvanceGeneration... method still relies on hardcoded 16 (4x4). Fix this.
 //          the constructor also has a 16 hardcode.
 #define GENETIC_OPTIMIZER_POPULATION_SIZE 8
@@ -27,20 +26,25 @@ namespace ns3
         {
         public:
             GeneticTXParameterOptimizer();
-            TransmissionParameterSet *GetCurrentTransmissionParameterSet();
+            Ptr<TransmissionParameterSet> GetCurrentTransmissionParameterSet();
             void SetCurrentTransmissionParameterSetSuccess(bool successful);
             void StopOptimizing();
             bool IsOptimizing();
 
+            double populationSize = 8;
+            double maxGenerations = 8;
+            double mutationRate;
+            double crossoverRate;
+            double elitismRate;
         private:
             void AdvancePopulationOrGeneration();
-            bool AddToPopulation(int offset, TransmissionParameterSet* tps);
+            bool AddToPopulation(int offset, Ptr<TransmissionParameterSet> tps);
             //A vector containing all TPSs that have been tried.
-            std::vector<TransmissionParameterSet*> transmissionParameterSets;
+            std::vector<Ptr<TransmissionParameterSet>> transmissionParameterSets;
             
             //an array containing the indices within the above vector indicating which
             //TPSs are being tested this generations
-            int currentPopulationIndices[GENETIC_OPTIMIZER_POPULATION_SIZE];
+            std::vector<int> currentPopulationIndices;
 
             //The index of the current index within the above array. 
             //(will always be between 0 and GENETIC_OPTIMIZER_POPULATION_SIZE)
@@ -48,8 +52,10 @@ namespace ns3
 
             int currentGeneration = 0;
             bool isOptimizing = true;
-            TransmissionParameterSet *MostFitTPS;
+            Ptr<TransmissionParameterSet> MostFitTPS;
             Ptr<UniformRandomVariable> randomGenerator;
+
+
         };
     }
 }

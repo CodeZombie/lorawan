@@ -9,6 +9,19 @@ namespace ns3
 
         NS_LOG_COMPONENT_DEFINE("TransmissionParameterSet");
 
+        TypeId TransmissionParameterSet::GetTypeId(void)
+        {
+            static TypeId tid = TypeId("ns3::TransmissionParameterSet")
+                                    .SetParent<Object>()
+                                    .SetGroupName("lorawan")
+                            .AddAttribute("MutationRate", "The mutation rate of the transmission parameter set.",
+                                          DoubleValue(0.9),
+                                          MakeDoubleAccessor(&TransmissionParameterSet::mutationRate),
+                                          MakeDoubleChecker<double>());
+            return tid;
+        }
+        
+
         TransmissionParameterSet::TransmissionParameterSet()
         {
             initializeRNG();
@@ -30,7 +43,7 @@ namespace ns3
             codingRate = randomGenerator->GetInteger(1, 4);
         }
 
-        bool TransmissionParameterSet::isEqual(TransmissionParameterSet *other)
+        bool TransmissionParameterSet::isEqual(Ptr<TransmissionParameterSet> other)
         {
             bool equality = true;
             if (spreadingFactor != other->spreadingFactor)
@@ -65,7 +78,7 @@ namespace ns3
             codingRate = cr;
         }
 
-        TransmissionParameterSet::TransmissionParameterSet(TransmissionParameterSet *other)
+        TransmissionParameterSet::TransmissionParameterSet(Ptr<TransmissionParameterSet> other)
         {
             initializeRNG();
             spreadingFactor = other->spreadingFactor;
@@ -74,7 +87,7 @@ namespace ns3
             codingRate = other->codingRate;
         }
 
-        TransmissionParameterSet::TransmissionParameterSet(TransmissionParameterSet *parent_a, TransmissionParameterSet *parent_b)
+        TransmissionParameterSet::TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b)
         {
             initializeRNG();
             //generate parameters based on parent's parameters.
@@ -118,7 +131,7 @@ namespace ns3
                 codingRate = parent_b->codingRate;
             }
 
-            if (randomGenerator->GetInteger(1, 100) > 2)
+            if (randomGenerator->GetValue(0, 1) > mutationRate)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
                 if (mutate_choice == 0)
@@ -147,7 +160,8 @@ namespace ns3
                     {
                         bandwidth = 125000;
                     }
-                    else if (bandwidth == 500000){
+                    else if (bandwidth == 500000)
+                    {
                         std::cout << "Bandwidth = 500,000. This should not happen." << std::endl;
                     }
                 }
@@ -209,6 +223,7 @@ namespace ns3
 
         void TransmissionParameterSet::onAckOrNack(bool successful)
         {
+            std::cout << mutationRate << std::endl;
             if (successful)
             {
                 successCount++;
@@ -219,7 +234,7 @@ namespace ns3
             }
         }
 
-        bool TransmissionParameterSet::CompareFitness(TransmissionParameterSet *a, TransmissionParameterSet *b)
+        bool TransmissionParameterSet::CompareFitness(Ptr<TransmissionParameterSet> a, Ptr<TransmissionParameterSet> b)
         {
             return a->fitness() < b->fitness();
         }
@@ -227,7 +242,8 @@ namespace ns3
         //  Fitness function: lower is better.
         float TransmissionParameterSet::fitness()
         {
-            if(getPER() == 1){
+            if (getPER() == 1)
+            {
                 return 1;
             }
 
@@ -256,7 +272,7 @@ namespace ns3
             //1000.0f / datarate gives us the amount of time, in seconds, it will take the phy to transmit 1000 bits of data.
             //1000 is chosen so that values are large enough such that they do not need to be expressed in scientific notation.
             double powerconsumption = (1000.0f / datarate) * power;
-            
+
             //return powerconsumption;
             //Output 0-1 depending on where the power factor is between the theoretical min and max.
             //lowest  = 0.0914286

@@ -82,7 +82,7 @@ namespace ns3
                                             "Total number of transmissions sent by this node. Includes retransmissions.",
                                             IntegerValue(false),
                                             MakeIntegerAccessor(&ClassAEndDeviceLorawanMac::TransmissionsSent),
-                                            MakeIntegerChecker<uint32_t>())              
+                                            MakeIntegerChecker<uint32_t>())
                               ;
 
       return tid;
@@ -103,8 +103,8 @@ namespace ns3
       m_closeSecondWindow.Cancel();
       m_secondReceiveWindow = EventId();
       m_secondReceiveWindow.Cancel();
-
       geneticTXParameterOptimizer = new GeneticTXParameterOptimizer();
+
     }
 
     ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac()
