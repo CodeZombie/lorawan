@@ -98,13 +98,6 @@ namespace ns3
                     return;
                 }
 
-                std::cout << "###### OLD POPULATION" << (currentGeneration - 1) << ": ########################################" << std::endl;
-                for(int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++) {
-                    transmissionParameterSets[currentPopulationIndices[i]]->Print();
-                }
-                std::cout << "###############################################################" << std::endl;
-
-
                 NS_LOG_INFO("Population depleted. Generating a new Population.");
                 currentTPSIndex = 0;
 

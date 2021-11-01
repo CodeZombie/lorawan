@@ -152,7 +152,7 @@ namespace ns3
         }else{
           SetMType(LorawanMacHeader::UNCONFIRMED_DATA_UP);
         }
-        geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
+        //geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->Print();
         m_lastFitnessLevel = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->fitness();
         //TotalPowerConsumption += geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->PowerConsumption();
         m_txPower = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->power;

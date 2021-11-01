@@ -40,16 +40,15 @@ using namespace lorawan;
 
 NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
 
-//Test
-
-void PrintEnergyRemaining(double a, double b){
-  std::cout << "Energy: " << a << " " << b << std::endl;
+void printTimeLoop()
+{
+  std::cout << "Current Time: " << Simulator::Now().GetHours() << "h" << std::endl;
+  Simulator::Schedule (Hours(5), &printTimeLoop);
 }
 
 /*******************************
              CONFIG            *
  ******************************/
-//TODO: These should be modified by CMD so we can set up automation routines.
 //TODO: Add some Genetic Algorithm parameter customization options here. (Population size, mutation rate, etc)
 
 bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic Algorithms or ADR.
@@ -272,6 +271,7 @@ int main(int argc, char *argv[])
   /**************************************
    *  Setup Tracing and Data Collection  *
    **************************************/
+  
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
   //Setup watchers.
@@ -288,12 +288,16 @@ int main(int argc, char *argv[])
   /****************
   *  Simulation  *
   ****************/
+  Simulator::Schedule (Hours(5), &printTimeLoop);
+
   Simulator::Stop(Hours(simTimeHours));
   Simulator::Run();
   Simulator::Destroy();
   LoraPacketTracker &tracker = helper.GetPacketTracker();
+  
   std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
   std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
 
   return 0;
 }
+
