@@ -26,6 +26,7 @@
 
 #include <map>
 #include <string>
+#include <fstream>
 
 namespace ns3 {
 namespace lorawan {
@@ -73,7 +74,7 @@ typedef std::map<Ptr<Packet const>, RetransmissionStatus> RetransmissionData;
 class LoraPacketTracker
 {
 public:
-  LoraPacketTracker ();
+  LoraPacketTracker (std::string prefix);
   ~LoraPacketTracker ();
 
   /////////////////////////
@@ -159,10 +160,18 @@ public:
    * of packets that generated a successful acknowledgment.
    */
   std::string CountMacPacketsGloballyCpsr (Time startTime, Time stopTime);
+
 private:
   PhyPacketData m_packetTracker;
   MacPacketData m_macPacketTracker;
   RetransmissionData m_reTransmissionTracker;
+
+  //File saving functions.
+  std::string m_outputFile_prefix;
+  std::ofstream successfullyRecievedPacketFileStream;
+  //std::ofstream unuccessfullyRecievedPacketFileStream;
+  int successfullyRecievedPackets = 0;
+  //int unsuccessfullyRecievedPackets = 0;
 };
 }
 }

@@ -140,7 +140,7 @@ main (int argc, char *argv[])
 
   // Create the LoraHelper
   LoraHelper helper = LoraHelper ();
-  helper.EnablePacketTracking (); // Output filename
+  helper.EnablePacketTracking ("frameCounterUpdateOutput"); // Output filename
 
   //Create the NetworkServerHelper
   NetworkServerHelper nsHelper = NetworkServerHelper ();

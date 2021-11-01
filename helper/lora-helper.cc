@@ -155,12 +155,12 @@ LoraHelper::Install ( const LoraPhyHelper &phy,
 }
 
 void
-LoraHelper::EnablePacketTracking ()
+LoraHelper::EnablePacketTracking (std::string prefix)
 {
   NS_LOG_FUNCTION (this);
 
   // Create the packet tracker
-  m_packetTracker = new LoraPacketTracker ();
+  m_packetTracker = new LoraPacketTracker (prefix);
 }
 
 LoraPacketTracker&

@@ -20,6 +20,7 @@ namespace ns3
             {
                 currentPopulationIndices[i] = i;
             }
+            /*
             transmissionParameterSets.push_back(new TransmissionParameterSet(7, 2, 500000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(7, 14, 250000, 1));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 125000, 1));
@@ -35,7 +36,19 @@ namespace ns3
             transmissionParameterSets.push_back(new TransmissionParameterSet(7, 12, 125000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 250000, 3));
             transmissionParameterSets.push_back(new TransmissionParameterSet(12, 12, 125000, 4));
-            transmissionParameterSets.push_back(new TransmissionParameterSet(8, 8, 250000, 3));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(8, 8, 250000, 3));*/
+
+            transmissionParameterSets.push_back(new TransmissionParameterSet(12, 14, 125000, 1));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(9, 6, 250000, 2));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(7, 2, 125000, 1));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(10, 8, 125000, 3));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(9, 10, 250000, 1));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(7, 12, 125000, 2));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(11, 4, 250000, 1));
+            transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 125000, 3));
+
+            //shuffle the transmissionParameterSets vector
+            std::random_shuffle(transmissionParameterSets.begin(), transmissionParameterSets.end());
         }
 
         TransmissionParameterSet *GeneticTXParameterOptimizer::GetCurrentTransmissionParameterSet()

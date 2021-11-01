@@ -79,7 +79,7 @@ public:
    * This method automatically connects to trace sources to computes relevant
    * metrics.
    */
-  void EnablePacketTracking (void);
+  void EnablePacketTracking (std::string prefix);
 
   /**
    * Periodically prints the simulation time to the standard output.

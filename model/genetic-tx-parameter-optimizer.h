@@ -7,7 +7,7 @@
 
 // ! TODO: this value does not work yet. The AdvanceGeneration... method still relies on hardcoded 16 (4x4). Fix this.
 //          the constructor also has a 16 hardcode.
-#define GENETIC_OPTIMIZER_POPULATION_SIZE 16
+#define GENETIC_OPTIMIZER_POPULATION_SIZE 8
 #define MAX_GENERATIONS 8
 #define MIN_SF 7
 #define MAX_SF 12

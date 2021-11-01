@@ -29,8 +29,11 @@ namespace ns3 {
 namespace lorawan {
 NS_LOG_COMPONENT_DEFINE ("LoraPacketTracker");
 
-LoraPacketTracker::LoraPacketTracker ()
+LoraPacketTracker::LoraPacketTracker (std::string prefix)
 {
+  this->m_outputFile_prefix = prefix;
+  successfullyRecievedPacketFileStream.open(this->m_outputFile_prefix + "successfully_recieved_packets.dat");
+  //unsuccessfullyRecievedPacketFileStream.open(this->m_outputFile_prefix + "unuccessfully_recieved_packets.dat");
   NS_LOG_FUNCTION (this);
 }
 
@@ -89,6 +92,9 @@ LoraPacketTracker::MacGwReceptionCallback (Ptr<Packet const> packet)
       NS_LOG_INFO ("A packet was successfully received" <<
                    " at the MAC layer of gateway " <<
                    Simulator::GetContext ());
+
+      successfullyRecievedPackets++;
+      successfullyRecievedPacketFileStream << Simulator::Now().GetHours() << " " << successfullyRecievedPackets << std::endl;
 
       // Find the received packet in the m_macPacketTracker
       auto it = m_macPacketTracker.find (packet);

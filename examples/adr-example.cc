@@ -181,7 +181,7 @@ int main (int argc, char *argv[])
 
    // Create the LoraHelper
    LoraHelper helper = LoraHelper ();
-   helper.EnablePacketTracking ();
+   helper.EnablePacketTracking ("adrExampleOutput");
 
    ////////////////
    // Create GWs //
