@@ -8,6 +8,7 @@ namespace ns3
     {
 
         NS_LOG_COMPONENT_DEFINE("TransmissionParameterSet");
+        NS_OBJECT_ENSURE_REGISTERED (TransmissionParameterSet);
 
         TypeId TransmissionParameterSet::GetTypeId(void)
         {

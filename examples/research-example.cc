@@ -4,8 +4,9 @@
  * 
  * TODO:
  * Implement buildings.
- * Print building and node locations to a dat file.
- * Setup the MAC so that it eventaully converges on an optimal setting after x transmissions and stops mutating/crossover.
+ * Pass values from CMD to ns3::TransmissionParameterSet through Config::SetDefault.
+ * Figure out a more meaningful way to convey data visually through GnuPlot. A stacking line graph is only useful in SOME situations.
+ * 
  */
 
 #include "ns3/end-device-lora-phy.h"
@@ -47,6 +48,8 @@ void printTimeLoop()
   Simulator::Schedule (Hours(5), &printTimeLoop);
 }
 
+
+void 
 /*******************************
              CONFIG            *
  ******************************/
@@ -59,8 +62,10 @@ Time transmitInterval = Hours(0);          //How frequently end-nodes transmit. 
 Time dataCaptureInterval = Hours(2);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
-double maxRandomLoss = 0;                  //The maximum amount of random loss that can be
-                                           //incurred by a transmission.
+double maxRandomLoss = 0;                  //The maximum amount of random loss that can be incurred by a transmission.
+double mutationRate = 0.85;                //The rate at which the Genetic Algorithm will mutate a given individual.
+double crossoverRate = 0.5;                //The rate at which the Genetic Algorithm will crossover two individuals.
+double elitismRate = 0.1;                  //The rate at which the Genetic Algorithm will keep the best individuals.
 
 int main(int argc, char *argv[])
 {
@@ -78,6 +83,9 @@ int main(int argc, char *argv[])
   //cmd.AddValue("macmutationrate", "The mutation rate of individuals in the MAC Layer's Genetic Algorithm", macMutationRate);
   //cmd.AddValue("gateways", "The number of gateways in the network", gatewayCount);
   cmd.Parse(argc, argv);
+
+  //Setup global defaults
+  Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (0.1337));
 
   /*****************************
    ******** LOGGING ************
@@ -285,6 +293,7 @@ int main(int argc, char *argv[])
   tracePrintHelper->AddValueWatcher(new ValueWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
   tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
   tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketsSent", "/NodeList/*/ApplicationList/*/$ns3::PeriodicSender", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::TraceSource,  outputFolder + "/"));
+
   tracePrintHelper->Start();
 
   /****************
