@@ -49,7 +49,6 @@ void printTimeLoop()
 }
 
 
-void 
 /*******************************
              CONFIG            *
  ******************************/
@@ -294,6 +293,7 @@ int main(int argc, char *argv[])
   tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
   tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketsSent", "/NodeList/*/ApplicationList/*/$ns3::PeriodicSender", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::TraceSource,  outputFolder + "/"));
 
+
   tracePrintHelper->Start();
 
   /****************
@@ -305,21 +305,9 @@ int main(int argc, char *argv[])
   Simulator::Run();
   Simulator::Destroy();
   LoraPacketTracker &tracker = helper.GetPacketTracker();
-  
+  tracker.PrintDiscretePSR(outputFolder + "/", Hours(4));
   std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
   std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
 
   return 0;
-}
-
-//Take a dataframe of continuous variables and discretize it
-std::vector<double> discretize(std::vector<double> dataframe, int numBins)
-{
-  std::vector<double> discretized;
-  double binSize = (dataframe.back() - dataframe.front()) / numBins;
-  for (std::vector<double>::iterator it = dataframe.begin(); it != dataframe.end(); ++it)
-  {
-    discretized.push_back(std::floor(*it / binSize) * binSize);
-  }
-  return discretized;
 }

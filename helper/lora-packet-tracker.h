@@ -161,6 +161,11 @@ public:
    */
   std::string CountMacPacketsGloballyCpsr (Time startTime, Time stopTime);
 
+
+  /// Custom
+
+  void PrintDiscretePSR(std::string filePrefix, ns3::Time interval);
+
 private:
   PhyPacketData m_packetTracker;
   MacPacketData m_macPacketTracker;
