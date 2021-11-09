@@ -68,12 +68,14 @@ GatewayLorawanMac::Send (Ptr<Packet> packet)
   packet->AddPacketTag (tag);
 
   // Make sure we can transmit this packet
+  /*
+  //Another hack to disable Duty Cycle limitations.
   if (m_channelHelper.GetWaitingTime(CreateObject<LogicalLoraChannel> (frequency)) > Time(0))
     {
       // We cannot send now!
       NS_LOG_WARN ("Trying to send a packet but Duty Cycle won't allow it. Aborting.");
       return;
-    }
+    }*/
 
   LoraTxParameters params;
   params.sf = GetSfFromDataRate (dataRate);
@@ -94,8 +96,7 @@ GatewayLorawanMac::Send (Ptr<Packet> packet)
       (CreateObject<LogicalLoraChannel> (frequency));
 
   // Add the event to the channelHelper to keep track of duty cycle
-  m_channelHelper.AddEvent (duration, CreateObject<LogicalLoraChannel>
-                              (frequency));
+  m_channelHelper.AddEvent (duration, CreateObject<LogicalLoraChannel> (frequency));
 
   // Send the packet to the PHY layer to send it on the channel
   m_phy->Send (packet, params, frequency, sendingPower);

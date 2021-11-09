@@ -32,7 +32,7 @@
 #include "ns3/traced-value.h"
 #include "ns3/trace-source-accessor.h"
 #include "ns3/genetic-tx-parameter-optimizer.h"
-
+#include "ns3/string.h"
 namespace ns3 {
 namespace lorawan {
 
@@ -43,6 +43,10 @@ class ClassAEndDeviceLorawanMac : public EndDeviceLorawanMac
 {
 public:
 
+  void setXPosition(DoubleValue x);
+  void setYPosition(DoubleValue y);
+  double getXPosition(void) const;
+  double getYPosition(void) const ; 
 
   static TypeId GetTypeId (void);
 
@@ -172,6 +176,8 @@ public:
    */
   virtual void OnRxClassParamSetupReq (Ptr<RxParamSetupReq> rxParamSetupReq);
 
+
+
 private:
 
   /**
@@ -234,7 +240,7 @@ private:
   TracedValue<double> PacketErrorRate = 0;
   TracedValue<double> TotalPowerConsumption = 0;
   
-  GeneticTXParameterOptimizer* geneticTXParameterOptimizer;
+  Ptr<GeneticTXParameterOptimizer> geneticTXParameterOptimizer;
 
   //this keeps track of the last transmission parameters for logging.
   LoraTxParameters lastParams;
@@ -243,6 +249,11 @@ private:
   TracedValue<double> lastNPacketSuccessRate = 0;
   void setLastFrameSuccess(bool success);
 
+
+    bool x_set = false;
+  bool y_set = false;
+    double m_location_x;
+  double m_location_y;
 }; /* ClassAEndDeviceLorawanMac */
 } /* namespace lorawan */
 } /* namespace ns3 */

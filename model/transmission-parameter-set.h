@@ -15,7 +15,7 @@ namespace ns3
         class TransmissionParameterSet : public Object
         {
         public:
-            static TypeId GetTypeId (void);
+            static TypeId GetTypeId(void);
             TransmissionParameterSet();
             TransmissionParameterSet(Ptr<TransmissionParameterSet> other);
             TransmissionParameterSet(int sf, int pow, int bw, int cr);
@@ -24,6 +24,7 @@ namespace ns3
             float getPER();
             int mutateValue(int originalValue, int delta, int min, int max);
             void Print();
+            std::string SPrint();
             float fitness();
             bool isEqual(Ptr<TransmissionParameterSet> other);
             int dataRate();
@@ -47,7 +48,6 @@ namespace ns3
         private:
             Ptr<UniformRandomVariable> randomGenerator;
             void initializeRNG();
-            
         };
 
     }

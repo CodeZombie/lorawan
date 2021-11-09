@@ -45,7 +45,7 @@ NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
 void printTimeLoop()
 {
   std::cout << "Current Time: " << Simulator::Now().GetHours() << "h" << std::endl;
-  Simulator::Schedule (Hours(5), &printTimeLoop);
+  Simulator::Schedule (Hours(100), &printTimeLoop);
 }
 
 
@@ -84,7 +84,8 @@ int main(int argc, char *argv[])
   cmd.Parse(argc, argv);
 
   //Setup global defaults
-  Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (0.1337));
+  Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (0.9));
+  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::FolderPrefix", StringValue (outputFolder + "/GAO_Logs/"));
 
   /*****************************
    ******** LOGGING ************
@@ -93,6 +94,9 @@ int main(int argc, char *argv[])
   //LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
 
   LogComponentEnable("EndDeviceLorawanMac", LOG_LEVEL_WARN);
+  LogComponentEnable("GatewayLorawanMac", LOG_LEVEL_WARN);
+  LogComponentEnable("GatewayStatus", LOG_LEVEL_WARN);
+  
 
   if (UseGeneticAlgorithm == false)
   {
@@ -274,6 +278,8 @@ int main(int argc, char *argv[])
     Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
     Vector position = mobility->GetPosition();
     locationFile << position.x << " " << position.y << std::endl;
+    (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->SetAttribute("Location_X", DoubleValue(position.x));
+    (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->SetAttribute("Location_Y", DoubleValue(position.y));
   }
 
   /**************************************
@@ -299,13 +305,13 @@ int main(int argc, char *argv[])
   /****************
   *  Simulation  *
   ****************/
-  Simulator::Schedule (Hours(5), &printTimeLoop);
+  Simulator::Schedule (Hours(100), &printTimeLoop);
 
   Simulator::Stop(Hours(simTimeHours));
   Simulator::Run();
   Simulator::Destroy();
   LoraPacketTracker &tracker = helper.GetPacketTracker();
-  tracker.PrintDiscretePSR(outputFolder + "/", Hours(4));
+  tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 16 ));
   std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
   std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
 

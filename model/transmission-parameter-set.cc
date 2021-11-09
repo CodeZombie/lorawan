@@ -29,7 +29,7 @@ namespace ns3
             //spreading factor: 7 to 12
             spreadingFactor = randomGenerator->GetInteger(7, 12);
             //power: 2, 4, 6, 8, 10, 12, 14, 16
-            power = randomGenerator->GetInteger(1, 7) * 2; //8
+            power = randomGenerator->GetInteger(1, 8) * 2; //8
             //bandwidth: 125000, 250000, 500000
             int choice = randomGenerator->GetInteger(1, 2); /// 2????
             if (choice == 1)
@@ -219,12 +219,15 @@ namespace ns3
         void TransmissionParameterSet::Print()
         {
             //NS_LOG_INFO("TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " SUCCESS= " << successful);
-            std::cout << "TXPARAMS: SF=" << spreadingFactor << " PW=" << power << " BW=" << bandwidth << " CR=" << codingRate << " FITNESS=" << fitness() << " PER=" << getPER() << std::endl;
+            std::cout << SPrint() << std::endl;
+        }
+
+        std::string TransmissionParameterSet::SPrint() {
+            return "TPS: SF=" + std::to_string(spreadingFactor) + " PW=" + std::to_string(power) + " BW=" + std::to_string(bandwidth) + " CR=" + std::to_string(codingRate) + " FITNESS=" + std::to_string(fitness()) + " PER=" + std::to_string(getPER());
         }
 
         void TransmissionParameterSet::onAckOrNack(bool successful)
         {
-            std::cout << mutationRate << std::endl;
             if (successful)
             {
                 successCount++;
@@ -243,13 +246,18 @@ namespace ns3
         //  Fitness function: lower is better.
         float TransmissionParameterSet::fitness()
         {
-            if (getPER() == 1)
-            {
-                return 1;
+            if(getPER() == 1.0){
+                return 999999;
             }
+            //Calculate the number of retries that are needed to succesfully transmit a packet given the current Packet Error Rate:
+            float PER = getPER();
+            float retries = log(1 - PER) / log(PER);
+            float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
+            return powerConsumption + (powerConsumption * retries);
 
-            float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power) * 0.5f;
-            return powerConsumption + (powerConsumption * getPER());
+
+            //float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power) * 0.5f;
+            //return powerConsumption + (powerConsumption * getPER());
         }
 
         float TransmissionParameterSet::PowerConsumption()
@@ -257,13 +265,31 @@ namespace ns3
             return PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
         }
 
+        //OPtions:
+        /*
+        * Lets say we have 5 TPSs.
+        1. PER: 0.1 TOTALPOW: 30
+        2. PER: 0.2 TOTALPOW: 20
+        3. PER: 1.0 TOTALPOW: 05
+        4. PER: 0.9 TOTALPOW: 10
+
+        we probably want it to choose either 1 or 2, but not 3 or 4.
+
+        */
+
         float TransmissionParameterSet::PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
-        {
+        {   
+
+
+
+
+
+
             //First, calculate the data rate of the given parameters.
             double datarate = (spreadingfactor * (bandwidth * 4 / std::pow(2, spreadingfactor)) * (1.0f / (codingrate + 4.0f)));
 
             double highest_datarate = (12 * (125000 * 4 / std::pow(2, 12)) * (1.0f / (4 + 4.0f)));
-            double highest_powerconsumption = (1000.0f / highest_datarate) * 14;
+            double highest_powerconsumption = (1000.0f / highest_datarate) * 16;
 
             double lowest_datarate = (7 * (250000 * 4 / std::pow(2, 7)) * (1.0f / (1 + 4.0f)));
             double lowest_powerconsumption = (1000.0f / lowest_datarate) * 2;

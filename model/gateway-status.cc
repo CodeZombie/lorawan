@@ -110,15 +110,18 @@ GatewayStatus::IsAvailableForTransmission (double frequency)
     }
 
   // Check that the gateway is not constrained by the duty cycle
+  //Note: Temp hack to disable Duty Cycle for downlink trans
+  /*
   Time waitingTime = m_gatewayMac->GetWaitingTime (frequency);
   if (waitingTime > Seconds (0))
     {
-      NS_LOG_INFO ("Gateway cannot be used because of duty cycle");
-      NS_LOG_INFO ("Waiting time at current GW: " << waitingTime.GetSeconds ()
+      NS_LOG_WARN ("Gateway cannot be used because of duty cycle");
+      NS_LOG_WARN ("Waiting time at current GW: " << waitingTime.GetSeconds ()
                                                   << " seconds");
 
       return false;
     }
+  */
 
   return true;
 }

@@ -232,12 +232,10 @@ LogicalLoraChannelHelper::AddEvent (Time duration,
   double timeOnAir = duration.GetSeconds ();
 
   // Computation of necessary waiting time on this sub-band
-  subBand->SetNextTransmissionTime (Simulator::Now () + Seconds
-                                      (timeOnAir / dutyCycle - timeOnAir));
-
+  subBand->SetNextTransmissionTime (Simulator::Now () + Seconds(timeOnAir / dutyCycle - timeOnAir));
+  
   // Computation of necessary aggregate waiting time
-  m_nextAggregatedTransmissionTime = Simulator::Now () + Seconds
-      (timeOnAir / m_aggregatedDutyCycle - timeOnAir);
+  m_nextAggregatedTransmissionTime = Simulator::Now () + Seconds(timeOnAir / m_aggregatedDutyCycle - timeOnAir);
 
   NS_LOG_DEBUG ("Time on air: " << timeOnAir);
   NS_LOG_DEBUG ("m_aggregatedDutyCycle: " << m_aggregatedDutyCycle);

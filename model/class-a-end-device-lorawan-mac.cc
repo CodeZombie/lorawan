@@ -83,6 +83,16 @@ namespace ns3
                                             IntegerValue(false),
                                             MakeIntegerAccessor(&ClassAEndDeviceLorawanMac::TransmissionsSent),
                                             MakeIntegerChecker<uint32_t>())
+                              .AddAttribute("Location_X", "Location X",
+                                            DoubleValue(0),
+                                            MakeDoubleAccessor( &ClassAEndDeviceLorawanMac::setXPosition,
+                                                                &ClassAEndDeviceLorawanMac::getXPosition),
+                                            MakeDoubleChecker<double>())
+                              .AddAttribute("Location_Y", "Location Y",
+                                            DoubleValue(0),
+                                            MakeDoubleAccessor(&ClassAEndDeviceLorawanMac::setYPosition,
+                                                                &ClassAEndDeviceLorawanMac::getYPosition),
+                                            MakeDoubleChecker<double>())
                               ;
 
       return tid;
@@ -103,13 +113,46 @@ namespace ns3
       m_closeSecondWindow.Cancel();
       m_secondReceiveWindow = EventId();
       m_secondReceiveWindow.Cancel();
-      geneticTXParameterOptimizer = new GeneticTXParameterOptimizer();
-
+      geneticTXParameterOptimizer = CreateObject<GeneticTXParameterOptimizer>();
     }
 
     ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac()
     {
       NS_LOG_FUNCTION_NOARGS();
+    }
+
+    void
+    ClassAEndDeviceLorawanMac::setXPosition(DoubleValue x)
+    {
+      if(x.Get() == 0.0) { return; }
+      std::cout << "called set x position: " << std::to_string(x.Get()) << std::endl;
+      x_set = true;
+      m_location_x = x.Get();
+      if(y_set == true){
+        geneticTXParameterOptimizer->CreateLogFile(m_location_x, m_location_y);
+      }
+    }
+
+    void
+    ClassAEndDeviceLorawanMac::setYPosition(DoubleValue y)
+    {
+      if(y.Get() == 0.0) { return; }
+      std::cout << "called set y position: " << std::to_string(y.Get()) << std::endl;
+      y_set = true;
+      m_location_y = y.Get();
+      if(x_set == true){
+        geneticTXParameterOptimizer->CreateLogFile(m_location_x, m_location_y);
+      }
+    }
+
+    double ClassAEndDeviceLorawanMac::getXPosition(void) const
+    {
+      return m_location_x;
+    }
+
+    double ClassAEndDeviceLorawanMac::getYPosition(void) const
+    {
+      return m_location_y;
     }
 
     /////////////////////
@@ -253,6 +296,9 @@ namespace ns3
       //{
         m_phy->GetObject<EndDeviceLoraPhy>()->SetSpreadingFactor(GetSfFromDataRate(replyDataRate));
       //}
+
+
+      //std::cout << "ADR: SF=" << +params.sf << " PW=" << m_txPower << " BW=" << +params.bandwidthHz << " CR=" << +params.codingRate << std::endl;
     }
 
     //////////////////////////

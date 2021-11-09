@@ -6,7 +6,19 @@ namespace ns3
     namespace lorawan
     {
         NS_LOG_COMPONENT_DEFINE("GeneticTransmissionParameterOptimizer");
+        NS_OBJECT_ENSURE_REGISTERED (GeneticTXParameterOptimizer);
 
+        TypeId GeneticTXParameterOptimizer::GetTypeId(void)
+        {
+            static TypeId tid = TypeId("ns3::GeneticTXParameterOptimizer")
+                                    .SetParent<Object>()
+                                    .SetGroupName("lorawan")
+                            .AddAttribute("FolderPrefix", "The folder that will be created .",
+                                          StringValue("default"),
+                                          MakeStringAccessor(&GeneticTXParameterOptimizer::FolderPrefix),
+                                          MakeStringChecker());
+            return tid;
+        }
         GeneticTXParameterOptimizer::GeneticTXParameterOptimizer()
         {
             NS_LOG_INFO("Instantiating a Genetic Transmission Parameter Optimizer.");
@@ -43,19 +55,50 @@ namespace ns3
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 250000, 3));
             transmissionParameterSets.push_back(new TransmissionParameterSet(12, 12, 125000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 8, 250000, 3));*/
-
+            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 125000, 2));
+            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 250000, 2));
+            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 8, 125000, 3));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 2, 125000, 1));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(8, 10, 250000, 2));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(9, 6, 125000, 3));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(10, 4, 250000, 4));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(11, 10, 125000, 1));
-            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 250000, 2));
-            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 8, 125000, 3));
-            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 250000, 4));
+            
+            
 
             //shuffle the transmissionParameterSets vector
             //std::srand(0); //ensure
             //std::random_shuffle(transmissionParameterSets.begin(), transmissionParameterSets.end());
+
+            //create a file using ofstream:
+        }
+
+        void GeneticTXParameterOptimizer::CreateLogFile(double x, double y)
+        {
+            std::string path = FolderPrefix + std::to_string(x) + "-" + std::to_string(y) + ".txt";
+            std::cout << "CREATING LOG FILE: " << std::to_string(x) << ", " << std::to_string(y) << " Out To: " << path << std::endl;
+            logFile.open(FolderPrefix + std::to_string(x) + "-" + std::to_string(y) + ".txt");
+            logFile << "x,y,populationSize,maxGenerations,mutationRate,crossoverRate,elitismRate" << std::endl;
+            logFile << std::to_string(x) << "," << std::to_string(y) << "," << "," << "," << std::to_string(populationSize) << "," << std::to_string(maxGenerations) << "," << std::to_string(mutationRate) << "," << std::to_string(crossoverRate) << "," << std::to_string(elitismRate) << std::endl;
+        }
+
+        void GeneticTXParameterOptimizer::PrintPopulation() {
+            logFile << std::endl << "Population " << +currentGeneration << ": " << std::endl;
+            for (int i = 0; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
+            {
+                
+                logFile << "TPS[" << +i << "]: " << transmissionParameterSets[currentPopulationIndices[i]]->SPrint() << std::endl;
+            }
+        }
+
+        void GeneticTXParameterOptimizer::PrintMasterList() {
+            logFile << std::endl << "Master List:" << std::endl;
+            //for every element in transmissionParameterSets
+
+            for (uint32_t i = 0; i < transmissionParameterSets.size(); i++)
+            {
+                logFile << "TPS[" << +i << "]: " << transmissionParameterSets[i]->SPrint() << std::endl;
+            }
         }
 
         Ptr<TransmissionParameterSet> GeneticTXParameterOptimizer::GetCurrentTransmissionParameterSet()
@@ -96,12 +139,16 @@ namespace ns3
             }
             else
             {
+                PrintPopulation();
                 currentGeneration++;
                 if(currentGeneration == MAX_GENERATIONS) {
                     //Get the most-fit individual from the master list.
                     std::sort(transmissionParameterSets.begin(), transmissionParameterSets.end(), TransmissionParameterSet::CompareFitness);
                     MostFitTPS = transmissionParameterSets[0];
                     isOptimizing = false;
+                    PrintMasterList();
+                    logFile << std::endl << "MOST FIT: " << std::endl;
+                    logFile << MostFitTPS->SPrint() << std::endl;
                     return;
                 }
 
@@ -124,6 +171,8 @@ namespace ns3
                 for(int i = 0; i < 4; i++){
                     AddToPopulation(i, fittestTPSs[i]);
                 }
+
+                
                 
                 //fill the population index array up with new stuff.
                 for (int i = 4; i < GENETIC_OPTIMIZER_POPULATION_SIZE; i++)
@@ -133,7 +182,7 @@ namespace ns3
                     Ptr<TransmissionParameterSet> newTPS = CreateObject<TransmissionParameterSet>(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b]);
                     bool unique = AddToPopulation(i, newTPS);
                     if(!unique) {
-                        std::cout << "AAAAAA" << std::endl;
+                        //std::cout << "AAAAAA" << std::endl;
                         //delete newTPS;
                     }
                 }

@@ -166,12 +166,14 @@ EndDeviceLorawanMac::Send (Ptr<Packet> packet)
   // If it is not possible to transmit now because of the duty cycle,
   // or because we are receiving, schedule a tx/retx later
 
-  Time netxTxDelay = GetNextTransmissionDelay ();
+  //NOTE: This is a temporary solution for disabling up-link duty cyle
+  /*Time netxTxDelay = GetNextTransmissionDelay ();
   if (netxTxDelay != Seconds (0))
     {
       postponeTransmission (netxTxDelay, packet);
       return;
     }
+  */
 
   // Pick a channel on which to transmit the packet
   Ptr<LogicalLoraChannel> txChannel = GetChannelForTx ();
