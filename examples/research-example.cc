@@ -82,12 +82,7 @@ int main(int argc, char *argv[])
   cmd.AddValue("maxgenerations", "The maximum number of generations the Genetic Algorithm will run for", maxGenerations);
   cmd.AddValue("mutationrate", "The maximum number of generations the Genetic Algorithm will run for", mutationRate);
   cmd.AddValue("outputfolder", "The name of the folder to stick output data into.", outputFolder);
-
-  //cmd.AddValue("macpopulationsize", "The size of each population in the MAC Layer's Genetic Algorithm", macPopulationSize);
-  //cmd.AddValue("macmutationrate", "The mutation rate of individuals in the MAC Layer's Genetic Algorithm", macMutationRate);
-  //cmd.AddValue("gateways", "The number of gateways in the network", gatewayCount);
   cmd.Parse(argc, argv);
-
   //Setup global defaults
   Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (mutationRate));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::FolderPrefix", StringValue (outputFolder + "/GAO_Logs/"));

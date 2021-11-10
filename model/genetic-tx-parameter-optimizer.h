@@ -8,8 +8,6 @@
 #include "ns3/log.h"
 // ! TODO: this value does not work yet. The AdvanceGeneration... method still relies on hardcoded 16 (4x4). Fix this.
 //          the constructor also has a 16 hardcode.
-#define GENETIC_OPTIMIZER_POPULATION_SIZE 8
-#define MAX_GENERATIONS 8
 #define MIN_SF 7
 #define MAX_SF 12
 #define MIN_TP 2
@@ -30,6 +28,7 @@ namespace ns3
             static TypeId GetTypeId(void);
             GeneticTXParameterOptimizer();
             Ptr<TransmissionParameterSet> GetCurrentTransmissionParameterSet();
+            void Initialize();
             void SetCurrentTransmissionParameterSetSuccess(bool successful);
             void StopOptimizing();
             bool IsOptimizing();

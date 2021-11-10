@@ -114,6 +114,7 @@ namespace ns3
       m_secondReceiveWindow = EventId();
       m_secondReceiveWindow.Cancel();
       geneticTXParameterOptimizer = CreateObject<GeneticTXParameterOptimizer>();
+      geneticTXParameterOptimizer->Initialize();
     }
 
     ClassAEndDeviceLorawanMac::~ClassAEndDeviceLorawanMac()

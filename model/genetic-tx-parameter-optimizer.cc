@@ -30,14 +30,19 @@ namespace ns3
         GeneticTXParameterOptimizer::GeneticTXParameterOptimizer()
         {
             NS_LOG_INFO("Instantiating a Genetic Transmission Parameter Optimizer.");
-            this->populationSize = populationSize;
-            this->maxGenerations = maxGenerations;
-            this->mutationRate = mutationRate;
-            this->crossoverRate = crossoverRate;
-            this->elitismRate = elitismRate;
-
+            
             randomGenerator = CreateObject<UniformRandomVariable>();
             currentTPSIndex = 0;
+
+            //shuffle the transmissionParameterSets vector
+            //std::srand(0); //ensure
+            //std::random_shuffle(transmissionParameterSets.begin(), transmissionParameterSets.end());
+
+            //create a file using ofstream:
+        }
+
+        void GeneticTXParameterOptimizer::Initialize()
+        {
             for (int i = 0; i < populationSize; i++)
             {
                 currentPopulationIndices.push_back(i);
@@ -74,12 +79,6 @@ namespace ns3
                 int pivot = randomGenerator->GetInteger(1, 3);
                 transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(transmissionParameterSets[parent_a], transmissionParameterSets[parent_b], pivot));
             }
-
-            //shuffle the transmissionParameterSets vector
-            //std::srand(0); //ensure
-            //std::random_shuffle(transmissionParameterSets.begin(), transmissionParameterSets.end());
-
-            //create a file using ofstream:
         }
 
         void GeneticTXParameterOptimizer::CreateLogFile(double x, double y)
@@ -88,9 +87,7 @@ namespace ns3
             std::cout << "CREATING LOG FILE: " << std::to_string(x) << ", " << std::to_string(y) << " Out To: " << path << std::endl;
             logFile.open(FolderPrefix + std::to_string(x) + "-" + std::to_string(y) + ".txt");
             logFile << "x,y,populationSize,maxGenerations,mutationRate,crossoverRate,elitismRate" << std::endl;
-            logFile << std::to_string(x) << "," << std::to_string(y) << ","
-                    << ","
-                    << "," << std::to_string(populationSize) << "," << std::to_string(maxGenerations) << "," << std::to_string(mutationRate) << "," << std::to_string(crossoverRate) << "," << std::to_string(elitismRate) << std::endl;
+            logFile << std::to_string(x) << "," << std::to_string(y) << "," << std::to_string(populationSize) << "," << std::to_string(maxGenerations) << "," << std::to_string(mutationRate) << "," << std::to_string(crossoverRate) << "," << std::to_string(elitismRate) << std::endl;
         }
 
         void GeneticTXParameterOptimizer::PrintPopulation()
