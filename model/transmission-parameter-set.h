@@ -20,7 +20,9 @@ namespace ns3
             TransmissionParameterSet(Ptr<TransmissionParameterSet> other);
             TransmissionParameterSet(int sf, int pow, int bw, int cr);
             TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b);
+            TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot);
 
+            void mutate();
             float getPER();
             int mutateValue(int originalValue, int delta, int min, int max);
             void Print();

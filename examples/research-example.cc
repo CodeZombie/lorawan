@@ -65,6 +65,8 @@ double maxRandomLoss = 0;                  //The maximum amount of random loss t
 double mutationRate = 0.85;                //The rate at which the Genetic Algorithm will mutate a given individual.
 double crossoverRate = 0.5;                //The rate at which the Genetic Algorithm will crossover two individuals.
 double elitismRate = 0.1;                  //The rate at which the Genetic Algorithm will keep the best individuals.
+uint32_t populationSize = 8;              //The size of the population of individuals.
+uint32_t maxGenerations = 8;              //The maximum number of generations the Genetic Algorithm will run for.
 
 int main(int argc, char *argv[])
 {
@@ -76,6 +78,9 @@ int main(int argc, char *argv[])
   cmd.AddValue("genetic", "Whether to use the genetic algorithm or ADR algorithm", UseGeneticAlgorithm);
   cmd.AddValue("randomloss", "The amount of random loss (noise) for signals.", maxRandomLoss);
   cmd.AddValue("simulationtime", "The length of the simulation in Hours", simTimeHours);
+  cmd.AddValue("populationsize", "The size of the population of individuals per generation", populationSize);
+  cmd.AddValue("maxgenerations", "The maximum number of generations the Genetic Algorithm will run for", maxGenerations);
+  cmd.AddValue("mutationrate", "The maximum number of generations the Genetic Algorithm will run for", mutationRate);
   cmd.AddValue("outputfolder", "The name of the folder to stick output data into.", outputFolder);
 
   //cmd.AddValue("macpopulationsize", "The size of each population in the MAC Layer's Genetic Algorithm", macPopulationSize);
@@ -84,8 +89,10 @@ int main(int argc, char *argv[])
   cmd.Parse(argc, argv);
 
   //Setup global defaults
-  Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (0.9));
+  Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (mutationRate));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::FolderPrefix", StringValue (outputFolder + "/GAO_Logs/"));
+  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::PopulationSize", UintegerValue (populationSize));
+  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::MaxGenerations", UintegerValue (maxGenerations));
 
   /*****************************
    ******** LOGGING ************

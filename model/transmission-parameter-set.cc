@@ -8,20 +8,19 @@ namespace ns3
     {
 
         NS_LOG_COMPONENT_DEFINE("TransmissionParameterSet");
-        NS_OBJECT_ENSURE_REGISTERED (TransmissionParameterSet);
+        NS_OBJECT_ENSURE_REGISTERED(TransmissionParameterSet);
 
         TypeId TransmissionParameterSet::GetTypeId(void)
         {
             static TypeId tid = TypeId("ns3::TransmissionParameterSet")
                                     .SetParent<Object>()
                                     .SetGroupName("lorawan")
-                            .AddAttribute("MutationRate", "The mutation rate of the transmission parameter set.",
-                                          DoubleValue(0.9),
-                                          MakeDoubleAccessor(&TransmissionParameterSet::mutationRate),
-                                          MakeDoubleChecker<double>());
+                                    .AddAttribute("MutationRate", "The mutation rate of the transmission parameter set.",
+                                                  DoubleValue(0.9),
+                                                  MakeDoubleAccessor(&TransmissionParameterSet::mutationRate),
+                                                  MakeDoubleChecker<double>());
             return tid;
         }
-        
 
         TransmissionParameterSet::TransmissionParameterSet()
         {
@@ -132,6 +131,43 @@ namespace ns3
                 codingRate = parent_b->codingRate;
             }
 
+            mutate();
+        }
+
+        TransmissionParameterSet::TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot)
+        {
+            initializeRNG();
+            //generate parameters based on parent's parameters, pivot point.
+
+            if (pivot == 1)
+            {
+                //pivot is SF
+                spreadingFactor = parent_a->spreadingFactor;
+                power = parent_b->power;
+                bandwidth = parent_b->bandwidth;
+                codingRate = parent_b->codingRate;
+            }
+            else if (pivot == 2)
+            {
+                //pivot is power
+                spreadingFactor = parent_a->spreadingFactor;
+                power = parent_a->power;
+                bandwidth = parent_b->bandwidth;
+                codingRate = parent_b->codingRate;
+            }
+            else if (pivot == 3)
+            {
+                //pivot is cr
+                spreadingFactor = parent_a->spreadingFactor;
+                power = parent_a->power;
+                bandwidth = parent_a->bandwidth;
+                codingRate = parent_b->codingRate;
+            }
+            mutate();
+        }
+
+        void TransmissionParameterSet::mutate()
+        {
             if (randomGenerator->GetValue(0, 1) > mutationRate)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
@@ -222,7 +258,8 @@ namespace ns3
             std::cout << SPrint() << std::endl;
         }
 
-        std::string TransmissionParameterSet::SPrint() {
+        std::string TransmissionParameterSet::SPrint()
+        {
             return "TPS: SF=" + std::to_string(spreadingFactor) + " PW=" + std::to_string(power) + " BW=" + std::to_string(bandwidth) + " CR=" + std::to_string(codingRate) + " FITNESS=" + std::to_string(fitness()) + " PER=" + std::to_string(getPER());
         }
 
@@ -246,7 +283,8 @@ namespace ns3
         //  Fitness function: lower is better.
         float TransmissionParameterSet::fitness()
         {
-            if(getPER() == 1.0){
+            if (getPER() == 1.0)
+            {
                 return 999999;
             }
             //Calculate the number of retries that are needed to succesfully transmit a packet given the current Packet Error Rate:
@@ -254,7 +292,6 @@ namespace ns3
             float retries = log(1 - PER) / log(PER);
             float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power);
             return powerConsumption + (powerConsumption * retries);
-
 
             //float powerConsumption = PowerConsumption(this->spreadingFactor, this->bandwidth, this->codingRate, this->power) * 0.5f;
             //return powerConsumption + (powerConsumption * getPER());
@@ -278,12 +315,7 @@ namespace ns3
         */
 
         float TransmissionParameterSet::PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
-        {   
-
-
-
-
-
+        {
 
             //First, calculate the data rate of the given parameters.
             double datarate = (spreadingfactor * (bandwidth * 4 / std::pow(2, spreadingfactor)) * (1.0f / (codingrate + 4.0f)));

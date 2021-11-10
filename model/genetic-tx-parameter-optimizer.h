@@ -36,7 +36,7 @@ namespace ns3
             void PrintPopulation();
             void PrintMasterList();
 
-            double populationSize = 8;
+            double populationSize;
             double maxGenerations = 8;
             double mutationRate;
             double crossoverRate;
