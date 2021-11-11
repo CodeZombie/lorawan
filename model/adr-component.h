@@ -36,14 +36,15 @@ namespace lorawan {
 
 class AdrComponent : public NetworkControllerComponent
 {
-  enum CombiningMethod
+  
+
+public:
+enum CombiningMethod
   {
     AVERAGE,
     MAXIMUM,
     MINIMUM,
   };
-
-public:
   static TypeId GetTypeId (void);
 
   //Constructor

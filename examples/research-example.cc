@@ -29,6 +29,8 @@
 #include "ns3/lora-radio-energy-model-helper.h"
 #include "ns3/file-helper.h"
 #include "ns3/names.h"
+#include "ns3/adr-component.h"
+
 
 #include "ns3/value-watcher.h"
 #include "ns3/trace-print-helper.h"
@@ -84,6 +86,7 @@ int main(int argc, char *argv[])
   cmd.AddValue("crossoverrate", "The maximum number of generations the Genetic Algorithm will run for", crossoverRate);
   cmd.AddValue("elitecount", "The number of 'elite' individuals which will remain untouched across generation changes.", eliteCount);
   cmd.AddValue("outputfolder", "The name of the folder to stick output data into.", outputFolder);
+  cmd.AddValue ("historyrange", "ns3::AdrComponent::HistoryRange");
   cmd.Parse(argc, argv);
   //Setup global defaults
   Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (mutationRate));
@@ -92,6 +95,8 @@ int main(int argc, char *argv[])
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::PopulationSize", UintegerValue (populationSize));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::MaxGenerations", UintegerValue (maxGenerations));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::EliteCount", UintegerValue (eliteCount));
+
+  Config::SetDefault ("ns3::AdrComponent::MultiplePacketsCombiningMethod", EnumValue (AdrComponent::AVERAGE));
 
   /*****************************
    ******** LOGGING ************
