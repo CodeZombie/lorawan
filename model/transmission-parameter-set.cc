@@ -168,7 +168,7 @@ namespace ns3
 
         void TransmissionParameterSet::mutate()
         {
-            if (randomGenerator->GetValue(0, 1) > mutationRate)
+            if (randomGenerator->GetValue(0, 1) < mutationRate)
             {
                 int mutate_choice = randomGenerator->GetInteger(0, 3);
                 if (mutate_choice == 0)
@@ -260,7 +260,14 @@ namespace ns3
 
         std::string TransmissionParameterSet::SPrint()
         {
-            return "TPS: SF=" + std::to_string(spreadingFactor) + " PW=" + std::to_string(power) + " BW=" + std::to_string(bandwidth) + " CR=" + std::to_string(codingRate) + " FITNESS=" + std::to_string(fitness()) + " PER=" + std::to_string(getPER());
+            return "TPS: SF=" + std::to_string(spreadingFactor) + 
+            " PW=" + std::to_string(power) + 
+            " BW=" + std::to_string(bandwidth) + 
+            " CR=" + std::to_string(codingRate) + 
+            " FITNESS=" + std::to_string(fitness()) + 
+            " PER=" + std::to_string(getPER()) +
+            " txSUCCESS= " + std::to_string(successCount) +
+            " txFAILURE= " + std::to_string(failureCount);
         }
 
         void TransmissionParameterSet::onAckOrNack(bool successful)

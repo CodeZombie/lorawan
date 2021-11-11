@@ -64,7 +64,8 @@ namespace ns3
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 4, 250000, 3));
             transmissionParameterSets.push_back(new TransmissionParameterSet(12, 12, 125000, 4));
             transmissionParameterSets.push_back(new TransmissionParameterSet(8, 8, 250000, 3));*/
-            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 125000, 2));
+
+            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 10, 125000, 2));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 250000, 2));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 8, 125000, 3));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 2, 125000, 1));
@@ -72,6 +73,7 @@ namespace ns3
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(9, 6, 125000, 3));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(10, 4, 250000, 4));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(11, 10, 125000, 1));
+            
             for (int i = 8; i < populationSize; i++)
             {
                 int parent_a = randomGenerator->GetInteger(0, 7);
@@ -99,6 +101,7 @@ namespace ns3
 
                 logFile << "TPS[" << +i << "]: " << transmissionParameterSets[currentPopulationIndices[i]]->SPrint() << std::endl;
             }
+            PrintMasterList();
         }
 
         void GeneticTXParameterOptimizer::PrintMasterList()
@@ -163,7 +166,7 @@ namespace ns3
                     std::sort(transmissionParameterSets.begin(), transmissionParameterSets.end(), TransmissionParameterSet::CompareFitness);
                     MostFitTPS = transmissionParameterSets[0];
                     isOptimizing = false;
-                    PrintMasterList();
+                    //PrintMasterList();
                     logFile << std::endl
                             << "MOST FIT: " << std::endl;
                     logFile << MostFitTPS->SPrint() << std::endl;
@@ -196,13 +199,14 @@ namespace ns3
                 {
                     int parent_id_a = randomGenerator->GetInteger(0, 2);
                     int parent_id_b = randomGenerator->GetInteger(0, 2);
+
                     int pivot_point = randomGenerator->GetInteger(1, 3);
 
                     Ptr<TransmissionParameterSet> newTPS_a = CreateObject<TransmissionParameterSet>(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b], pivot_point);
                     AddToPopulation(i, newTPS_a);
 
                     Ptr<TransmissionParameterSet> newTPS_b = CreateObject<TransmissionParameterSet>(fittestTPSs[parent_id_b], fittestTPSs[parent_id_a], pivot_point);
-                    AddToPopulation(i, newTPS_b);
+                    AddToPopulation(i + 1, newTPS_b);
                 }
             }
         }
