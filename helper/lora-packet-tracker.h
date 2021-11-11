@@ -165,7 +165,7 @@ public:
   /// Custom
 
   void PrintDiscretePSR(std::string filePrefix, ns3::Time interval);
-
+  double GetPacketReceptionRate(ns3::Time startTime, ns3::Time stopTime);
 private:
   PhyPacketData m_packetTracker;
   MacPacketData m_macPacketTracker;

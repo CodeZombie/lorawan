@@ -446,5 +446,19 @@ namespace ns3
              std::to_string(received);
     }
 
+    double LoraPacketTracker::GetPacketReceptionRate(ns3::Time startTime, ns3::Time stopTime) {
+      double sent = 0;
+      double received = 0;
+      for (auto it = m_macPacketTracker.begin(); it != m_macPacketTracker.end(); ++it) { //For every packet
+        if ((*it).second.sendTime >= startTime && (*it).second.sendTime <= stopTime) {
+          sent++;
+          if ((*it).second.receptionTimes.size()) { //if the packet was receieved.
+            received++;
+          }
+        }
+      }
+      return received / sent;
+    }
+
   }
 }

@@ -39,7 +39,7 @@ namespace ns3
             double maxGenerations = 8;
             double mutationRate;
             double crossoverRate;
-            double elitismRate;
+            int eliteCount;
             void CreateLogFile(double x, double y);
             std::ofstream logFile;
             std::string FolderPrefix;

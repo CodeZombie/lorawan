@@ -18,6 +18,10 @@ namespace ns3
                                     .AddAttribute("MutationRate", "The mutation rate of the transmission parameter set.",
                                                   DoubleValue(0.9),
                                                   MakeDoubleAccessor(&TransmissionParameterSet::mutationRate),
+                                                  MakeDoubleChecker<double>())
+                                    .AddAttribute("CrossoverRate", "The crossover rate of the transmission parameter set.",
+                                                  DoubleValue(0.1),
+                                                  MakeDoubleAccessor(&TransmissionParameterSet::crossoverRate),
                                                   MakeDoubleChecker<double>());
             return tid;
         }
@@ -87,58 +91,20 @@ namespace ns3
             codingRate = other->codingRate;
         }
 
-        TransmissionParameterSet::TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b)
+        void TransmissionParameterSet::Crossover(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot)
         {
-            initializeRNG();
-            //generate parameters based on parent's parameters.
-            int sf_choice = randomGenerator->GetInteger(1, 2);
-            if (sf_choice == 1)
+            //Check to see if a crossover should even occur.
+            if (randomGenerator->GetValue(0, 1) > crossoverRate)
             {
-                spreadingFactor = parent_a->spreadingFactor;
-            }
-            else
-            {
-                spreadingFactor = parent_b->spreadingFactor;
-            }
-
-            int pow_choice = randomGenerator->GetInteger(1, 2);
-            if (pow_choice == 1)
-            {
-                power = parent_a->power;
-            }
-            else
-            {
-                power = parent_b->power;
+                //Do not crossover. Simply duplicate the settings from parent_a and end;
+                this->spreadingFactor = parent_a->spreadingFactor;
+                this->power = parent_a->power;
+                this->bandwidth = parent_a->bandwidth;
+                this->codingRate = parent_a->codingRate;
+                return;
             }
 
-            int bw_choice = randomGenerator->GetInteger(1, 2);
-            if (bw_choice == 1)
-            {
-                bandwidth = parent_a->bandwidth;
-            }
-            else
-            {
-                bandwidth = parent_b->bandwidth;
-            }
-
-            int cr_choice = randomGenerator->GetInteger(1, 2);
-            if (cr_choice == 1)
-            {
-                codingRate = parent_a->codingRate;
-            }
-            else
-            {
-                codingRate = parent_b->codingRate;
-            }
-
-            mutate();
-        }
-
-        TransmissionParameterSet::TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot)
-        {
-            initializeRNG();
             //generate parameters based on parent's parameters, pivot point.
-
             if (pivot == 1)
             {
                 //pivot is SF
@@ -163,45 +129,40 @@ namespace ns3
                 bandwidth = parent_a->bandwidth;
                 codingRate = parent_b->codingRate;
             }
-            mutate();
         }
 
-        void TransmissionParameterSet::mutate()
+        void TransmissionParameterSet::Mutate()
         {
+
+            //mutate SF
             if (randomGenerator->GetValue(0, 1) < mutationRate)
             {
-                int mutate_choice = randomGenerator->GetInteger(0, 3);
-                if (mutate_choice == 0)
+                spreadingFactor = mutateValue(spreadingFactor, 1, 7, 12);
+            }
+
+            //mutate power
+            if (randomGenerator->GetValue(0, 1) < mutationRate)
+            {
+                power = mutateValue(power, 2, 2, 14);
+            }
+
+            //mutate bandwidth
+            if (randomGenerator->GetValue(0, 1) < mutationRate)
+            {
+                if (bandwidth == 125000)
                 {
-                    //mutate SF
-                    spreadingFactor = mutateValue(spreadingFactor, 1, 7, 12);
+                    bandwidth = 250000;
                 }
-                else if (mutate_choice == 1)
+                else if (bandwidth == 250000)
                 {
-                    //mutate power
-                    power = mutateValue(power, 2, 2, 14);
+                    bandwidth = 125000;
                 }
-                else if (mutate_choice == 2)
-                {
-                    //mutate cr
-                    codingRate = mutateValue(codingRate, 1, 1, 4);
-                }
-                else
-                {
-                    //mutate bw
-                    if (bandwidth == 125000)
-                    {
-                        bandwidth = 250000;
-                    }
-                    else if (bandwidth == 250000)
-                    {
-                        bandwidth = 125000;
-                    }
-                    else if (bandwidth == 500000)
-                    {
-                        std::cout << "Bandwidth = 500,000. This should not happen." << std::endl;
-                    }
-                }
+            }
+
+            //mutate cr
+            if (randomGenerator->GetValue(0, 1) < mutationRate)
+            {
+                codingRate = mutateValue(codingRate, 1, 1, 4);
             }
         }
 
@@ -260,14 +221,14 @@ namespace ns3
 
         std::string TransmissionParameterSet::SPrint()
         {
-            return "TPS: SF=" + std::to_string(spreadingFactor) + 
-            " PW=" + std::to_string(power) + 
-            " BW=" + std::to_string(bandwidth) + 
-            " CR=" + std::to_string(codingRate) + 
-            " FITNESS=" + std::to_string(fitness()) + 
-            " PER=" + std::to_string(getPER()) +
-            " txSUCCESS= " + std::to_string(successCount) +
-            " txFAILURE= " + std::to_string(failureCount);
+            return "TPS: SF=" + std::to_string(spreadingFactor) +
+                   " PW=" + std::to_string(power) +
+                   " BW=" + std::to_string(bandwidth) +
+                   " CR=" + std::to_string(codingRate) +
+                   " FITNESS=" + std::to_string(fitness()) +
+                   " PER=" + std::to_string(getPER()) +
+                   " txSUCCESS= " + std::to_string(successCount) +
+                   " txFAILURE= " + std::to_string(failureCount);
         }
 
         void TransmissionParameterSet::onAckOrNack(bool successful)

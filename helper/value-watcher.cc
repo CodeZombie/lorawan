@@ -121,6 +121,7 @@ namespace ns3
                 else if (this->mode == ValueWatcher::CombineMode::Sum)
                 { //Store all values in sum but don't divide.
                     this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                    this->TraceSourceSumDouble = sum;
                 }
             }
             else if (this->type == ValueWatcher::Type::Integer)
@@ -144,6 +145,7 @@ namespace ns3
                 else if (this->mode == ValueWatcher::CombineMode::Sum)
                 { //Store all values in sum but don't divide.
                     this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                    this->TraceSourceSumInteger = sum;
                 }
             }
             else if (this->type == ValueWatcher::Type::Uinteger)

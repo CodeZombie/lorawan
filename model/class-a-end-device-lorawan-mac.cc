@@ -126,7 +126,7 @@ namespace ns3
     ClassAEndDeviceLorawanMac::setXPosition(DoubleValue x)
     {
       if(x.Get() == 0.0) { return; }
-      std::cout << "called set x position: " << std::to_string(x.Get()) << std::endl;
+      //std::cout << "called set x position: " << std::to_string(x.Get()) << std::endl;
       x_set = true;
       m_location_x = x.Get();
       if(y_set == true){
@@ -138,7 +138,7 @@ namespace ns3
     ClassAEndDeviceLorawanMac::setYPosition(DoubleValue y)
     {
       if(y.Get() == 0.0) { return; }
-      std::cout << "called set y position: " << std::to_string(y.Get()) << std::endl;
+      //std::cout << "called set y position: " << std::to_string(y.Get()) << std::endl;
       y_set = true;
       m_location_y = y.Get();
       if(x_set == true){

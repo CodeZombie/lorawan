@@ -19,12 +19,10 @@ namespace ns3
             TransmissionParameterSet();
             TransmissionParameterSet(Ptr<TransmissionParameterSet> other);
             TransmissionParameterSet(int sf, int pow, int bw, int cr);
-            TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b);
-            TransmissionParameterSet(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot);
 
-            void mutate();
+            void Crossover(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot);
+            void Mutate();
             float getPER();
-            int mutateValue(int originalValue, int delta, int min, int max);
             void Print();
             std::string SPrint();
             float fitness();
@@ -46,10 +44,12 @@ namespace ns3
             static bool CompareFitness(Ptr<TransmissionParameterSet> a, Ptr<TransmissionParameterSet> b);
 
             double mutationRate;
+            double crossoverRate;
 
         private:
             Ptr<UniformRandomVariable> randomGenerator;
             void initializeRNG();
+            int mutateValue(int originalValue, int delta, int min, int max);
         };
 
     }

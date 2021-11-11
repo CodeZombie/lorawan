@@ -95,7 +95,7 @@ namespace ns3
       interval = m_period;
       initialOffset = intervalProb * m_period;
 
-      std::cout << "Initial Delay: " << initialOffset.GetHours() << " Interval: " << interval.GetHours() << " hours" << std::endl;
+      //std::cout << "Initial Delay: " << initialOffset.GetHours() << " Interval: " << interval.GetHours() << " hours" << std::endl;
 
       app->SetInterval(interval);
       NS_LOG_DEBUG("Created an application with interval = " << interval.GetHours() << " hours");

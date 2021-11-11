@@ -23,6 +23,8 @@ class TracePrintHelper {
     public:
         TracePrintHelper(Time updateInterval);
         void AddValueWatcher(ValueWatcher* watcher);
+        double GetDoubleValue(std::string name);
+        int GetIntValue(std::string name);
         void Start();
     private:
         /* Get's called every <interval> */

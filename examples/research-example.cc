@@ -63,8 +63,8 @@ std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
 double maxRandomLoss = 0;                  //The maximum amount of random loss that can be incurred by a transmission.
 double mutationRate = 0.85;                //The rate at which the Genetic Algorithm will mutate a given individual.
-double crossoverRate = 0.5;                //The rate at which the Genetic Algorithm will crossover two individuals.
-double elitismRate = 0.1;                  //The rate at which the Genetic Algorithm will keep the best individuals.
+double crossoverRate = 0.6997;                //The rate at which the Genetic Algorithm will crossover two individuals.
+int eliteCount = 4;                  //The rate at which the Genetic Algorithm will keep the best individuals.
 uint32_t populationSize = 8;              //The size of the population of individuals.
 uint32_t maxGenerations = 8;              //The maximum number of generations the Genetic Algorithm will run for.
 
@@ -81,13 +81,17 @@ int main(int argc, char *argv[])
   cmd.AddValue("populationsize", "The size of the population of individuals per generation", populationSize);
   cmd.AddValue("maxgenerations", "The maximum number of generations the Genetic Algorithm will run for", maxGenerations);
   cmd.AddValue("mutationrate", "The maximum number of generations the Genetic Algorithm will run for", mutationRate);
+  cmd.AddValue("crossoverrate", "The maximum number of generations the Genetic Algorithm will run for", crossoverRate);
+  cmd.AddValue("elitecount", "The number of 'elite' individuals which will remain untouched across generation changes.", eliteCount);
   cmd.AddValue("outputfolder", "The name of the folder to stick output data into.", outputFolder);
   cmd.Parse(argc, argv);
   //Setup global defaults
   Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (mutationRate));
+  Config::SetDefault ("ns3::TransmissionParameterSet::CrossoverRate", DoubleValue (crossoverRate));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::FolderPrefix", StringValue (outputFolder + "/GAO_Logs/"));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::PopulationSize", UintegerValue (populationSize));
   Config::SetDefault ("ns3::GeneticTXParameterOptimizer::MaxGenerations", UintegerValue (maxGenerations));
+  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::EliteCount", UintegerValue (eliteCount));
 
   /*****************************
    ******** LOGGING ************
@@ -314,8 +318,10 @@ int main(int argc, char *argv[])
   Simulator::Destroy();
   LoraPacketTracker &tracker = helper.GetPacketTracker();
   tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 16 ));
-  std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
-  std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
+  std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
+  //std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
+  std::cout << "Total Energy Consumption: " << tracePrintHelper->GetDoubleValue("TotalEnergyConsumption") << std::endl;
+  std::cout << "Packet Reception Rate: " << tracker.GetPacketReceptionRate(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
 
   return 0;
 }

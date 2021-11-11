@@ -24,6 +24,10 @@ namespace ns3
                                     .AddAttribute("MaxGenerations", "The maximum number of generations.",
                                                   UintegerValue(100),
                                                   MakeUintegerAccessor(&GeneticTXParameterOptimizer::maxGenerations),
+                                                  MakeUintegerChecker<uint32_t>())
+                                    .AddAttribute("EliteCount", "The number of elite individuals.",
+                                                  UintegerValue(4),
+                                                  MakeUintegerAccessor(&GeneticTXParameterOptimizer::eliteCount),
                                                   MakeUintegerChecker<uint32_t>());
             return tid;
         }
@@ -79,17 +83,19 @@ namespace ns3
                 int parent_a = randomGenerator->GetInteger(0, 7);
                 int parent_b = randomGenerator->GetInteger(0, 7);
                 int pivot = randomGenerator->GetInteger(1, 3);
-                transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(transmissionParameterSets[parent_a], transmissionParameterSets[parent_b], pivot));
+                Ptr<TransmissionParameterSet> new_tps = CreateObject<TransmissionParameterSet>();
+                new_tps->Crossover(transmissionParameterSets[parent_a], transmissionParameterSets[parent_b], pivot);
+                transmissionParameterSets.push_back(new_tps);
             }
         }
 
         void GeneticTXParameterOptimizer::CreateLogFile(double x, double y)
         {
             std::string path = FolderPrefix + std::to_string(x) + "-" + std::to_string(y) + ".txt";
-            std::cout << "CREATING LOG FILE: " << std::to_string(x) << ", " << std::to_string(y) << " Out To: " << path << std::endl;
+            //std::cout << "CREATING LOG FILE: " << std::to_string(x) << ", " << std::to_string(y) << " Out To: " << path << std::endl;
             logFile.open(FolderPrefix + std::to_string(x) + "-" + std::to_string(y) + ".txt");
             logFile << "x,y,populationSize,maxGenerations,mutationRate,crossoverRate,elitismRate" << std::endl;
-            logFile << std::to_string(x) << "," << std::to_string(y) << "," << std::to_string(populationSize) << "," << std::to_string(maxGenerations) << "," << std::to_string(mutationRate) << "," << std::to_string(crossoverRate) << "," << std::to_string(elitismRate) << std::endl;
+            logFile << std::to_string(x) << "," << std::to_string(y) << "," << std::to_string(populationSize) << "," << std::to_string(maxGenerations) << "," << std::to_string(mutationRate) << "," << std::to_string(crossoverRate) << "," << std::to_string(eliteCount) << std::endl;
         }
 
         void GeneticTXParameterOptimizer::PrintPopulation()
@@ -189,23 +195,27 @@ namespace ns3
                 //sort this vector by Fitness (PER and PowerCons.)
                 std::sort(fittestTPSs.begin(), fittestTPSs.end(), TransmissionParameterSet::CompareFitness);
 
-                for (int i = 0; i < 2; i++)
+                for (int i = 0; i < eliteCount; i++)
                 {
                     AddToPopulation(i, fittestTPSs[i]);
                 }
 
                 //fill the population index array up with new stuff.
-                for (int i = 2; i < populationSize; i += 2)
+                for (int i = eliteCount; i < populationSize; i += 2)
                 {
-                    int parent_id_a = randomGenerator->GetInteger(0, 2);
-                    int parent_id_b = randomGenerator->GetInteger(0, 2);
+                    int parent_id_a = randomGenerator->GetInteger(0, eliteCount);
+                    int parent_id_b = randomGenerator->GetInteger(0, eliteCount);
 
                     int pivot_point = randomGenerator->GetInteger(1, 3);
 
-                    Ptr<TransmissionParameterSet> newTPS_a = CreateObject<TransmissionParameterSet>(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b], pivot_point);
+                    Ptr<TransmissionParameterSet> newTPS_a = CreateObject<TransmissionParameterSet>();
+                    newTPS_a->Crossover(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b], pivot_point);
+                    newTPS_a->Mutate();
                     AddToPopulation(i, newTPS_a);
 
-                    Ptr<TransmissionParameterSet> newTPS_b = CreateObject<TransmissionParameterSet>(fittestTPSs[parent_id_b], fittestTPSs[parent_id_a], pivot_point);
+                    Ptr<TransmissionParameterSet> newTPS_b = CreateObject<TransmissionParameterSet>();
+                    newTPS_b->Crossover(fittestTPSs[parent_id_b], fittestTPSs[parent_id_a], pivot_point);
+                    newTPS_b->Mutate();
                     AddToPopulation(i + 1, newTPS_b);
                 }
             }
