@@ -43,6 +43,7 @@ namespace ns3
             void CreateLogFile(double x, double y);
             std::ofstream logFile;
             std::string FolderPrefix;
+            bool logFileCreated = false;
         private:
             void AdvancePopulationOrGeneration();
             bool AddToPopulation(int offset, Ptr<TransmissionParameterSet> tps);

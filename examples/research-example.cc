@@ -31,7 +31,6 @@
 #include "ns3/names.h"
 #include "ns3/adr-component.h"
 
-
 #include "ns3/value-watcher.h"
 #include "ns3/trace-print-helper.h"
 
@@ -47,28 +46,27 @@ NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
 void printTimeLoop()
 {
   std::cout << "Current Time: " << Simulator::Now().GetHours() << "h" << std::endl;
-  Simulator::Schedule (Hours(100), &printTimeLoop);
+  Simulator::Schedule(Hours(100), &printTimeLoop);
 }
-
 
 /*******************************
              CONFIG            *
  ******************************/
-//TODO: Add some Genetic Algorithm parameter customization options here. (Population size, mutation rate, etc)
+bool EnableProbing = true;
 
 bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic Algorithms or ADR.
 int simTimeHours = 350;                    //How long the simulation should run for.
 int NumberOfNodes = 1182;                  //The number of end-node devices in the network.
-Time transmitInterval = Hours(1);          //How frequently end-nodes transmit. 0 = Random.
+Time transmitInterval = Hours(24);          //How frequently end-nodes transmit. 0 = Random.
 Time dataCaptureInterval = Hours(2);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
 double maxRandomLoss = 0;                  //The maximum amount of random loss that can be incurred by a transmission.
 double mutationRate = 0.85;                //The rate at which the Genetic Algorithm will mutate a given individual.
-double crossoverRate = 0.6997;                //The rate at which the Genetic Algorithm will crossover two individuals.
-int eliteCount = 4;                  //The rate at which the Genetic Algorithm will keep the best individuals.
-uint32_t populationSize = 8;              //The size of the population of individuals.
-uint32_t maxGenerations = 8;              //The maximum number of generations the Genetic Algorithm will run for.
+double crossoverRate = 0.6997;             //The rate at which the Genetic Algorithm will crossover two individuals.
+int eliteCount = 4;                        //The rate at which the Genetic Algorithm will keep the best individuals.
+uint32_t populationSize = 8;               //The size of the population of individuals.
+uint32_t maxGenerations = 8;               //The maximum number of generations the Genetic Algorithm will run for.
 
 int main(int argc, char *argv[])
 {
@@ -86,17 +84,17 @@ int main(int argc, char *argv[])
   cmd.AddValue("crossoverrate", "The maximum number of generations the Genetic Algorithm will run for", crossoverRate);
   cmd.AddValue("elitecount", "The number of 'elite' individuals which will remain untouched across generation changes.", eliteCount);
   cmd.AddValue("outputfolder", "The name of the folder to stick output data into.", outputFolder);
-  cmd.AddValue ("historyrange", "ns3::AdrComponent::HistoryRange");
+  cmd.AddValue("historyrange", "ns3::AdrComponent::HistoryRange");
   cmd.Parse(argc, argv);
   //Setup global defaults
-  Config::SetDefault ("ns3::TransmissionParameterSet::MutationRate", DoubleValue (mutationRate));
-  Config::SetDefault ("ns3::TransmissionParameterSet::CrossoverRate", DoubleValue (crossoverRate));
-  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::FolderPrefix", StringValue (outputFolder + "/GAO_Logs/"));
-  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::PopulationSize", UintegerValue (populationSize));
-  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::MaxGenerations", UintegerValue (maxGenerations));
-  Config::SetDefault ("ns3::GeneticTXParameterOptimizer::EliteCount", UintegerValue (eliteCount));
+  Config::SetDefault("ns3::TransmissionParameterSet::MutationRate", DoubleValue(mutationRate));
+  Config::SetDefault("ns3::TransmissionParameterSet::CrossoverRate", DoubleValue(crossoverRate));
+  Config::SetDefault("ns3::GeneticTXParameterOptimizer::FolderPrefix", StringValue(outputFolder + "/GAO_Logs/"));
+  Config::SetDefault("ns3::GeneticTXParameterOptimizer::PopulationSize", UintegerValue(populationSize));
+  Config::SetDefault("ns3::GeneticTXParameterOptimizer::MaxGenerations", UintegerValue(maxGenerations));
+  Config::SetDefault("ns3::GeneticTXParameterOptimizer::EliteCount", UintegerValue(eliteCount));
 
-  Config::SetDefault ("ns3::AdrComponent::MultiplePacketsCombiningMethod", EnumValue (AdrComponent::AVERAGE));
+  Config::SetDefault("ns3::AdrComponent::MultiplePacketsCombiningMethod", EnumValue(AdrComponent::AVERAGE));
 
   /*****************************
    ******** LOGGING ************
@@ -104,10 +102,9 @@ int main(int argc, char *argv[])
   //LogComponentEnable ("AdrComponent", LOG_LEVEL_ALL);
   //LogComponentEnable("GeneticTransmissionParameterOptimizer", LOG_LEVEL_ALL);
 
-  LogComponentEnable("EndDeviceLorawanMac", LOG_LEVEL_WARN);
-  LogComponentEnable("GatewayLorawanMac", LOG_LEVEL_WARN);
-  LogComponentEnable("GatewayStatus", LOG_LEVEL_WARN);
-  
+  //LogComponentEnable("EndDeviceLorawanMac", LOG_LEVEL_WARN);
+  //LogComponentEnable("GatewayLorawanMac", LOG_LEVEL_WARN);
+  //LogComponentEnable("GatewayStatus", LOG_LEVEL_WARN);
 
   if (UseGeneticAlgorithm == false)
   {
@@ -199,8 +196,6 @@ int main(int argc, char *argv[])
 
   NetDeviceContainer endDevicesNetDevices = helper.Install(phyHelper, macHelper, endDevices);
 
-
-
   /*******************
    * Install Energy Model
    * *******************/
@@ -208,18 +203,18 @@ int main(int argc, char *argv[])
   BasicEnergySourceHelper basicSourceHelper;
   LoraRadioEnergyModelHelper radioEnergyHelper;
   // configure energy source
-  basicSourceHelper.Set ("BasicEnergySourceInitialEnergyJ", DoubleValue (10000)); // Energy in J
-  basicSourceHelper.Set ("BasicEnergySupplyVoltageV", DoubleValue (3.3));
+  basicSourceHelper.Set("BasicEnergySourceInitialEnergyJ", DoubleValue(10000)); // Energy in J
+  basicSourceHelper.Set("BasicEnergySupplyVoltageV", DoubleValue(3.3));
 
-  radioEnergyHelper.Set ("StandbyCurrentA", DoubleValue (0.0014));
-  radioEnergyHelper.Set ("TxCurrentA", DoubleValue (0.028));
-  radioEnergyHelper.Set ("SleepCurrentA", DoubleValue (0.0000015));
-  radioEnergyHelper.Set ("RxCurrentA", DoubleValue (0.0112));
+  radioEnergyHelper.Set("StandbyCurrentA", DoubleValue(0.0014));
+  radioEnergyHelper.Set("TxCurrentA", DoubleValue(0.028));
+  radioEnergyHelper.Set("SleepCurrentA", DoubleValue(0.0000015));
+  radioEnergyHelper.Set("RxCurrentA", DoubleValue(0.0112));
 
-  radioEnergyHelper.SetTxCurrentModel ("ns3::ConstantLoraTxCurrentModel", "TxCurrent", DoubleValue (0.028));
+  radioEnergyHelper.SetTxCurrentModel("ns3::ConstantLoraTxCurrentModel", "TxCurrent", DoubleValue(0.028));
 
   // install source on EDs' nodes
-  EnergySourceContainer energySources = basicSourceHelper.Install (endDevices);
+  EnergySourceContainer energySources = basicSourceHelper.Install(endDevices);
 
   // install device model
   DeviceEnergyModelContainer deviceModels = radioEnergyHelper.Install(endDevicesNetDevices, energySources);
@@ -240,7 +235,7 @@ int main(int argc, char *argv[])
   // Create a netdevice for each gateway
   phyHelper.SetDeviceType(LoraPhyHelper::GW);
   macHelper.SetDeviceType(LorawanMacHelper::GW);
-  macHelper.SetRegion (LorawanMacHelper::EU);
+  macHelper.SetRegion(LorawanMacHelper::EU);
   helper.Install(phyHelper, macHelper, gateways);
 
   /*********************************************
@@ -252,7 +247,6 @@ int main(int argc, char *argv[])
   ApplicationContainer appContainer = appHelper.Install(endDevices);
   appContainer.Start(Seconds(0));
   appContainer.Stop(Hours(simTimeHours));
-
 
   /**************************
    *  Create Network Server  *
@@ -266,65 +260,73 @@ int main(int argc, char *argv[])
   ForwarderHelper forHelper = ForwarderHelper();
   forHelper.Install(gateways);
 
-
   /**************************
    * Print location of gateway node(s)
    * ************************/
-  std::ofstream gwlocationFile;
-  gwlocationFile.open(outputFolder + "/gatewayLocations.dat");
-  for (NodeContainer::Iterator j = gateways.Begin(); j != gateways.End(); ++j)
+  if (EnableProbing)
   {
-    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
-    Vector position = mobility->GetPosition();
-    gwlocationFile << position.x << " " << position.y << std::endl;
+    std::ofstream gwlocationFile;
+    gwlocationFile.open(outputFolder + "/gatewayLocations.dat");
+    for (NodeContainer::Iterator j = gateways.Begin(); j != gateways.End(); ++j)
+    {
+      Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
+      Vector position = mobility->GetPosition();
+      gwlocationFile << position.x << " " << position.y << std::endl;
+    }
   }
-  
-    /******************************
+
+  /******************************
   * Print location of end node(s)
   * *****************************/
-  std::ofstream locationFile;
-  locationFile.open(outputFolder + "/endDeviceLocations.dat");
-  for (NodeContainer::Iterator j = endDevices.Begin(); j != endDevices.End(); ++j)
+  if (EnableProbing)
   {
-    Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
-    Vector position = mobility->GetPosition();
-    locationFile << position.x << " " << position.y << std::endl;
-    (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->SetAttribute("Location_X", DoubleValue(position.x));
-    (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->SetAttribute("Location_Y", DoubleValue(position.y));
+    std::ofstream locationFile;
+    locationFile.open(outputFolder + "/endDeviceLocations.dat");
+    for (NodeContainer::Iterator j = endDevices.Begin(); j != endDevices.End(); ++j)
+    {
+      Ptr<MobilityModel> mobility = (*j)->GetObject<MobilityModel>();
+      Vector position = mobility->GetPosition();
+      locationFile << position.x << " " << position.y << std::endl;
+      (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->SetAttribute("Location_X", DoubleValue(position.x));
+      (*j)->GetDevice(0)->GetObject<LoraNetDevice>()->GetMac()->SetAttribute("Location_Y", DoubleValue(position.y));
+    }
   }
 
   /**************************************
    *  Setup Tracing and Data Collection  *
    **************************************/
-  
+
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
   //Setup watchers.
   tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalEnergyConsumption", &deviceModels, ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Uinteger, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketsSent", "/NodeList/*/ApplicationList/*/$ns3::PeriodicSender", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::TraceSource,  outputFolder + "/"));
-
-
+  if (EnableProbing)
+  {
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Uinteger, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketsSent", "/NodeList/*/ApplicationList/*/$ns3::PeriodicSender", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::TraceSource, outputFolder + "/"));
+  }
   tracePrintHelper->Start();
 
   /****************
   *  Simulation  *
   ****************/
-  Simulator::Schedule (Hours(100), &printTimeLoop);
+  Simulator::Schedule(Hours(100), &printTimeLoop);
 
   Simulator::Stop(Hours(simTimeHours));
   Simulator::Run();
   Simulator::Destroy();
   LoraPacketTracker &tracker = helper.GetPacketTracker();
-  tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 16 ));
-  std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
-  //std::cout << tracker.CountMacPacketsGloballyCpsr(Seconds(0), Hours(simTimeHours) + Hours(1)) << std::endl;
+  if (EnableProbing)
+  {
+    tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 16));
+    std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
+  }
   std::cout << "Total Energy Consumption: " << tracePrintHelper->GetDoubleValue("TotalEnergyConsumption") << std::endl;
   std::cout << "Packet Reception Rate: " << tracker.GetPacketReceptionRate(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
 

@@ -96,10 +96,15 @@ namespace ns3
             logFile.open(FolderPrefix + std::to_string(x) + "-" + std::to_string(y) + ".txt");
             logFile << "x,y,populationSize,maxGenerations,mutationRate,crossoverRate,elitismRate" << std::endl;
             logFile << std::to_string(x) << "," << std::to_string(y) << "," << std::to_string(populationSize) << "," << std::to_string(maxGenerations) << "," << std::to_string(mutationRate) << "," << std::to_string(crossoverRate) << "," << std::to_string(eliteCount) << std::endl;
+            logFileCreated = true;
         }
 
         void GeneticTXParameterOptimizer::PrintPopulation()
         {
+            if(!logFileCreated){
+                return;
+            }
+
             logFile << std::endl
                     << "Population " << +currentGeneration << ": " << std::endl;
             for (int i = 0; i < populationSize; i++)
@@ -112,6 +117,10 @@ namespace ns3
 
         void GeneticTXParameterOptimizer::PrintMasterList()
         {
+            if(!logFileCreated){
+                return;
+            }
+
             logFile << std::endl
                     << "Master List:" << std::endl;
             //for every element in transmissionParameterSets
@@ -172,7 +181,6 @@ namespace ns3
                     std::sort(transmissionParameterSets.begin(), transmissionParameterSets.end(), TransmissionParameterSet::CompareFitness);
                     MostFitTPS = transmissionParameterSets[0];
                     isOptimizing = false;
-                    //PrintMasterList();
                     logFile << std::endl
                             << "MOST FIT: " << std::endl;
                     logFile << MostFitTPS->SPrint() << std::endl;
@@ -201,22 +209,17 @@ namespace ns3
                 }
 
                 //fill the population index array up with new stuff.
-                for (int i = eliteCount; i < populationSize; i += 2)
+                for (int i = eliteCount; i < populationSize; i++)
                 {
                     int parent_id_a = randomGenerator->GetInteger(0, eliteCount);
                     int parent_id_b = randomGenerator->GetInteger(0, eliteCount);
 
                     int pivot_point = randomGenerator->GetInteger(1, 3);
 
-                    Ptr<TransmissionParameterSet> newTPS_a = CreateObject<TransmissionParameterSet>();
-                    newTPS_a->Crossover(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b], pivot_point);
-                    newTPS_a->Mutate();
-                    AddToPopulation(i, newTPS_a);
-
-                    Ptr<TransmissionParameterSet> newTPS_b = CreateObject<TransmissionParameterSet>();
-                    newTPS_b->Crossover(fittestTPSs[parent_id_b], fittestTPSs[parent_id_a], pivot_point);
-                    newTPS_b->Mutate();
-                    AddToPopulation(i + 1, newTPS_b);
+                    Ptr<TransmissionParameterSet> newTPS = CreateObject<TransmissionParameterSet>();
+                    newTPS->Crossover(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b], pivot_point);
+                    newTPS->Mutate();
+                    AddToPopulation(i, newTPS);
                 }
             }
         }
