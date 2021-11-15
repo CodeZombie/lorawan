@@ -166,6 +166,8 @@ namespace ns3
       TransmissionsSent++;
       PacketErrorRate = static_cast<float>(UnacknowledgedTransmissions) / static_cast<float>(TransmissionsSent);
 
+      //std::cout << "Sent " << +TransmissionsSent << " Transmissions." << std::endl;
+
       /////////////////////////////////////////////////////////
       // Add headers, prepare TX parameters and send the packet
       /////////////////////////////////////////////////////////
@@ -203,6 +205,7 @@ namespace ns3
         params.sf = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->spreadingFactor;
         params.codingRate = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->codingRate;
         params.bandwidthHz = geneticTXParameterOptimizer->GetCurrentTransmissionParameterSet()->bandwidth;
+
         //manually set the datarate:
         //This is PROBABLY unecessary. ADRACKREQ's require datarates to be set like this, but the device
         //  should still be able to listen without messing around with DR stuff.  
@@ -244,6 +247,7 @@ namespace ns3
         //TotalPowerConsumption += TransmissionParameterSet::PowerConsumption(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
         //std::cout << "SF: " << +params.sf << " TP: " << +m_txPower << " BW: " << +params.bandwidthHz << " CR: " << +params.codingRate << std::endl;
         //m_lastFitnessLevel = TransmissionParameterSet::fitness(params.sf, params.bandwidthHz, params.codingRate, m_txPower);
+
       }
 
       params.headerDisabled = m_headerDisabled;
@@ -269,7 +273,13 @@ namespace ns3
       Time duration = m_phy->GetOnAirTime(packetToSend, params);
 
       //Keep track of how much power we're consuming.
-      TotalPowerConsumption += duration.GetSeconds() * m_txPower;
+      //TotalPowerConsumption += duration.GetSeconds() * m_txPower;
+
+      // Supply Voltage = 3.3, ATA = 0.1, Standby= 0.0014
+      double txCurrent = DbmToW (m_txPower) / (3.3 * 0.10) + 0.0014;
+      TotalPowerConsumption += duration.GetSeconds() * 3.3 * txCurrent;
+
+      
 
       // Register the sent packet into the DutyCycleHelper
       m_channelHelper.AddEvent(duration, txChannel);

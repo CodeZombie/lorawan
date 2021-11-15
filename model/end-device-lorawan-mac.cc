@@ -591,7 +591,7 @@ EndDeviceLorawanMac::GetChannelForTx (void)
 
       NS_LOG_DEBUG ("Waiting time for current channel = " <<
                     waitingTime.GetSeconds ());
-
+      return *it;
       // Send immediately if we can
       if (waitingTime == Seconds (0))
         {

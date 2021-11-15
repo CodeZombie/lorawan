@@ -58,7 +58,7 @@ bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic 
 int simTimeHours = 350;                    //How long the simulation should run for.
 int NumberOfNodes = 1182;                  //The number of end-node devices in the network.
 Time transmitInterval = Hours(24);          //How frequently end-nodes transmit. 0 = Random.
-Time dataCaptureInterval = Hours(2);       //The time in between data sampling.
+Time dataCaptureInterval = Hours(1);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
 double maxRandomLoss = 0;                  //The maximum amount of random loss that can be incurred by a transmission.
@@ -300,15 +300,17 @@ int main(int argc, char *argv[])
   tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
   //Setup watchers.
   tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalEnergyConsumption", &deviceModels, ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  //tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalPowerConsumption", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+
   if (EnableProbing)
   {
-    tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    //tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketErrorRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
     tracePrintHelper->AddValueWatcher(new ValueWatcher("TransmissionsSent", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-    tracePrintHelper->AddValueWatcher(new ValueWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-    tracePrintHelper->AddValueWatcher(new ValueWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Uinteger, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-    tracePrintHelper->AddValueWatcher(new ValueWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-    tracePrintHelper->AddValueWatcher(new ValueWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-    tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    //tracePrintHelper->AddValueWatcher(new ValueWatcher("LastNPSR", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    //tracePrintHelper->AddValueWatcher(new ValueWatcher("DataRate", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Uinteger, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    //tracePrintHelper->AddValueWatcher(new ValueWatcher("LastFitnessLevel", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    //tracePrintHelper->AddValueWatcher(new ValueWatcher("FailedTransmissionCount", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+    //tracePrintHelper->AddValueWatcher(new ValueWatcher("MType", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Enum, ValueWatcher::CombineMode::None, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
     tracePrintHelper->AddValueWatcher(new ValueWatcher("PacketsSent", "/NodeList/*/ApplicationList/*/$ns3::PeriodicSender", ValueWatcher::Type::Integer, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::TraceSource, outputFolder + "/"));
   }
   tracePrintHelper->Start();
@@ -324,7 +326,7 @@ int main(int argc, char *argv[])
   LoraPacketTracker &tracker = helper.GetPacketTracker();
   if (EnableProbing)
   {
-    tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 16));
+    tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 128));
     std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
   }
   std::cout << "Total Energy Consumption: " << tracePrintHelper->GetDoubleValue("TotalEnergyConsumption") << std::endl;

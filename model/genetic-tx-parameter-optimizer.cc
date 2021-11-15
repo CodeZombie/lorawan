@@ -73,15 +73,21 @@ namespace ns3
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(12, 14, 250000, 2));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 8, 125000, 3));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(7, 2, 125000, 1));
-            transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(8, 10, 250000, 2));
+            
+            
+            
+            
+            //transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(8, 10, 250000, 2));
+            /*
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(9, 6, 125000, 3));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(10, 4, 250000, 4));
             transmissionParameterSets.push_back(CreateObject<TransmissionParameterSet>(11, 10, 125000, 1));
+            */
             
-            for (int i = 8; i < populationSize; i++)
+            for (int i = 4; i < populationSize; i++)
             {
-                int parent_a = randomGenerator->GetInteger(0, 7);
-                int parent_b = randomGenerator->GetInteger(0, 7);
+                int parent_a = randomGenerator->GetInteger(0, 3);
+                int parent_b = randomGenerator->GetInteger(0, 3);
                 int pivot = randomGenerator->GetInteger(1, 3);
                 Ptr<TransmissionParameterSet> new_tps = CreateObject<TransmissionParameterSet>();
                 new_tps->Crossover(transmissionParameterSets[parent_a], transmissionParameterSets[parent_b], pivot);
@@ -112,7 +118,6 @@ namespace ns3
 
                 logFile << "TPS[" << +i << "]: " << transmissionParameterSets[currentPopulationIndices[i]]->SPrint() << std::endl;
             }
-            PrintMasterList();
         }
 
         void GeneticTXParameterOptimizer::PrintMasterList()
@@ -151,6 +156,7 @@ namespace ns3
                 return;
             }
             GetCurrentTransmissionParameterSet()->onAckOrNack(successful);
+            logFile << "   -> " << GetCurrentTransmissionParameterSet()->SPrint() << std::endl;
             AdvancePopulationOrGeneration();
         }
 
@@ -174,6 +180,7 @@ namespace ns3
             else
             {
                 PrintPopulation();
+                PrintMasterList();
                 currentGeneration++;
                 if (currentGeneration == maxGenerations)
                 {
@@ -190,8 +197,7 @@ namespace ns3
                 NS_LOG_INFO("Population depleted. Generating a new Population.");
                 currentTPSIndex = 0;
 
-                //Find the most-fit individuals with a PER under TargetPER
-                //if no individuals are below TargetPER, just find the lowest PER individuals.
+                //Create a new data structure to hold this generation.
                 std::vector<Ptr<TransmissionParameterSet>> fittestTPSs = std::vector<Ptr<TransmissionParameterSet>>();
 
                 //put the individuals from the current population into a vector.
@@ -208,16 +214,39 @@ namespace ns3
                     AddToPopulation(i, fittestTPSs[i]);
                 }
 
+                //Set up the roulette wheel by adding duplicate instances of TPSs to the vector proportional to their position in the sorted vector.
+                std::vector<Ptr<TransmissionParameterSet>> rouletteWheel = std::vector<Ptr<TransmissionParameterSet>>();
+                for (int i = 0; i < populationSize; i++)
+                {
+                    for (int j = 0; j < (populationSize - i); j++)
+                    {
+                        rouletteWheel.push_back(fittestTPSs[i]);
+                    }
+                }
+
                 //fill the population index array up with new stuff.
                 for (int i = eliteCount; i < populationSize; i++)
                 {
-                    int parent_id_a = randomGenerator->GetInteger(0, eliteCount);
-                    int parent_id_b = randomGenerator->GetInteger(0, eliteCount);
+                    int parent_wheel_id_a = randomGenerator->GetInteger(0, rouletteWheel.size() - 1);
+                    int parent_wheel_id_b = -1;
 
+                    int attempts = 0;
+                    bool choseUnique = false;
+                    while(!choseUnique){
+                        parent_wheel_id_b = randomGenerator->GetInteger(0, rouletteWheel.size() - 1);
+                        if(!rouletteWheel[parent_wheel_id_a]->isEqual(rouletteWheel[parent_wheel_id_b])) 
+                        {
+                            choseUnique = true;
+                        }
+                        attempts++;
+                        if(attempts > 9999){
+                            choseUnique = true;
+                        }
+                    }
                     int pivot_point = randomGenerator->GetInteger(1, 3);
 
                     Ptr<TransmissionParameterSet> newTPS = CreateObject<TransmissionParameterSet>();
-                    newTPS->Crossover(fittestTPSs[parent_id_a], fittestTPSs[parent_id_b], pivot_point);
+                    newTPS->Crossover(rouletteWheel[parent_wheel_id_a], rouletteWheel[parent_wheel_id_b], pivot_point);
                     newTPS->Mutate();
                     AddToPopulation(i, newTPS);
                 }

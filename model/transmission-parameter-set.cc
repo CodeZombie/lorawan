@@ -94,6 +94,7 @@ namespace ns3
         void TransmissionParameterSet::Crossover(Ptr<TransmissionParameterSet> parent_a, Ptr<TransmissionParameterSet> parent_b, int pivot)
         {
             //Check to see if a crossover should even occur.
+            //NOTE: This should be randm() < crossoverRate not the other way around lol
             if (randomGenerator->GetValue(0, 1) > crossoverRate)
             {
                 //Do not crossover. Simply duplicate the settings from parent_a and end;

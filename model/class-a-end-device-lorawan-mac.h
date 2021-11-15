@@ -33,6 +33,7 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/genetic-tx-parameter-optimizer.h"
 #include "ns3/string.h"
+#include "lora-utils.h"
 namespace ns3 {
 namespace lorawan {
 
