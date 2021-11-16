@@ -20,7 +20,7 @@ namespace ns3
                                                   MakeDoubleAccessor(&TransmissionParameterSet::mutationRate),
                                                   MakeDoubleChecker<double>())
                                     .AddAttribute("CrossoverRate", "The crossover rate of the transmission parameter set.",
-                                                  DoubleValue(0.1),
+                                                  DoubleValue(0.9),
                                                   MakeDoubleAccessor(&TransmissionParameterSet::crossoverRate),
                                                   MakeDoubleChecker<double>());
             return tid;
@@ -95,7 +95,7 @@ namespace ns3
         {
             //Check to see if a crossover should even occur.
             //NOTE: This should be randm() < crossoverRate not the other way around lol
-            if (randomGenerator->GetValue(0, 1) > crossoverRate)
+            if (randomGenerator->GetValue(0, 1) < crossoverRate)
             {
                 //Do not crossover. Simply duplicate the settings from parent_a and end;
                 this->spreadingFactor = parent_a->spreadingFactor;

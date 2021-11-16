@@ -58,7 +58,7 @@ bool UseGeneticAlgorithm = false;          //whether the MAC should use Genetic 
 int simTimeHours = 350;                    //How long the simulation should run for.
 int NumberOfNodes = 1182;                  //The number of end-node devices in the network.
 Time transmitInterval = Hours(24);          //How frequently end-nodes transmit. 0 = Random.
-Time dataCaptureInterval = Hours(1);       //The time in between data sampling.
+Time dataCaptureInterval = Hours(2);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
 std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
 double maxRandomLoss = 0;                  //The maximum amount of random loss that can be incurred by a transmission.
