@@ -82,7 +82,7 @@ namespace ns3
                 this->TraceSourceSumInteger += (new_value - old_value);
                 val = this->TraceSourceSumInteger;
             }
-            this->fileStream << ns3::Simulator::Now().GetHours() << " " << val << std::endl;
+            this->fileStream << ns3::Simulator::Now().GetDays() << " " << val << std::endl;
         }
 
         void ValueWatcher::StoreDoubleValue(double old_value, double new_value)
@@ -92,7 +92,7 @@ namespace ns3
                 this->TraceSourceSumDouble += (new_value - old_value);
                 val = this->TraceSourceSumDouble;
             }
-            this->fileStream << ns3::Simulator::Now().GetHours() << " " << val << std::endl;
+            this->fileStream << ns3::Simulator::Now().GetDays() << " " << val << std::endl;
         }
 
         void ValueWatcher::ProbeAndSave()
@@ -110,17 +110,17 @@ namespace ns3
                     object->GetAttribute(this->attributeName, value);
                     if (this->mode == ValueWatcher::CombineMode::None)
                     { //Save to file immediately.
-                        this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                        this->fileStream << ns3::Simulator::Now().GetDays() << " " << value.Get() << std::endl;
                     }
                     sum += value.Get();
                 }
                 if (this->mode == ValueWatcher::CombineMode::Average)
                 { //Store all values in sum and divide by number of objects.
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
                 }
                 else if (this->mode == ValueWatcher::CombineMode::Sum)
                 { //Store all values in sum but don't divide.
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << sum << std::endl;
                     this->TraceSourceSumDouble = sum;
                 }
             }
@@ -134,17 +134,17 @@ namespace ns3
                     object->GetAttribute(this->attributeName, value);
                     if (this->mode == ValueWatcher::CombineMode::None)
                     { //Save to file immediately.
-                        this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                        this->fileStream << ns3::Simulator::Now().GetDays() << " " << value.Get() << std::endl;
                     }
                     sum += value.Get();
                 }
                 if (this->mode == ValueWatcher::CombineMode::Average)
                 { //Store all values in sum and divide by number of objects.
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
                 }
                 else if (this->mode == ValueWatcher::CombineMode::Sum)
                 { //Store all values in sum but don't divide.
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << sum << std::endl;
                     this->TraceSourceSumInteger = sum;
                 }
             }
@@ -157,17 +157,17 @@ namespace ns3
                     object->GetAttribute(this->attributeName, value);
                     if (this->mode == ValueWatcher::CombineMode::None)
                     { //Save to file immediately.
-                        this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                        this->fileStream << ns3::Simulator::Now().GetDays() << " " << value.Get() << std::endl;
                     }
                     sum += value.Get();
                 }
                 if (this->mode == ValueWatcher::CombineMode::Average)
                 { //Store all values in sum and divide by number of objects.
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << ((float)sum / (float)this->watchedObjects.size()) << std::endl;
                 }
                 else if (this->mode == ValueWatcher::CombineMode::Sum)
                 { //Store all values in sum but don't divide.
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << sum << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << sum << std::endl;
                 }
             }
             else if (this->type == ValueWatcher::Type::Enum)
@@ -176,7 +176,7 @@ namespace ns3
                 {
                     EnumValue value = 0;
                     object->GetAttribute(this->attributeName, value);
-                    this->fileStream << ns3::Simulator::Now().GetHours() << " " << value.Get() << std::endl;
+                    this->fileStream << ns3::Simulator::Now().GetDays() << " " << value.Get() << std::endl;
                 }
             }
         }

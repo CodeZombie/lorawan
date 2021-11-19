@@ -229,7 +229,8 @@ namespace ns3
                    " FITNESS=" + std::to_string(fitness()) +
                    " PER=" + std::to_string(getPER()) +
                    " txSUCCESS= " + std::to_string(successCount) +
-                   " txFAILURE= " + std::to_string(failureCount);
+                   " txFAILURE= " + std::to_string(failureCount) +
+                   " 12-byte Energy (mJ): " + std::to_string(PCON(96.0, spreadingFactor, bandwidth, codingRate, power));
         }
 
         void TransmissionParameterSet::onAckOrNack(bool successful)
@@ -282,6 +283,15 @@ namespace ns3
         we probably want it to choose either 1 or 2, but not 3 or 4.
 
         */
+
+       float TransmissionParameterSet::PCON(double bits, uint8_t sf, uint32_t b, int cr, float p) {
+           float cr_ = 4.0 / (cr + 1.0); //Convert Coding Rate from an integer into the ratio (1 -> 4/5)
+           float datarate = sf * ((cr_) / (std::pow(2, sf) / b)); //Calculate the datarate given the sf bw and cr.
+           
+            // Remember that J = Watts x Time (seconds)
+           //Calculate the TOA for a 1000 byte packet, and multiply it by the dBm -> W value. This will give you the Joules.
+           return ((bits / datarate) * (std::pow(10, (p/10)) / 1000.0)) * 1000.0; //the 1000 at the end converts this to milliJoules. 
+       }
 
         float TransmissionParameterSet::PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power)
         {

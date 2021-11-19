@@ -6,6 +6,9 @@
 #include "ns3/transmission-parameter-set.h"
 #include "ns3/string.h"
 #include "ns3/log.h"
+#include "ns3/core-module.h"
+#include "ns3/simulator.h"
+
 // ! TODO: this value does not work yet. The AdvanceGeneration... method still relies on hardcoded 16 (4x4). Fix this.
 //          the constructor also has a 16 hardcode.
 #define MIN_SF 7

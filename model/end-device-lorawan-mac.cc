@@ -716,7 +716,6 @@ EndDeviceLorawanMac::OnLinkAdrReq (uint8_t dataRate, uint8_t txPower,
 {
   NS_LOG_FUNCTION (this << unsigned (dataRate) << unsigned (txPower) <<
                    repetitions);
-
   // Three bools for three requirements before setting things up
   bool channelMaskOk = true;
   bool dataRateOk = true;
@@ -816,7 +815,7 @@ EndDeviceLorawanMac::OnLinkAdrReq (uint8_t dataRate, uint8_t txPower,
       // Set the transmission power
       m_txPower = GetDbmForTxPower (txPower);
     }
-
+  std::cout << "ADRLINKREQ: " << "SF: " << unsigned (sf) << ", BW: " << bw  << " TP:" << unsigned (txPower) << " CR: 1" << std::endl;
   // Craft a LinkAdrAns MAC command as a response
   ///////////////////////////////////////////////
   m_macCommandList.push_back (CreateObject<LinkAdrAns> (txPowerOk, dataRateOk,

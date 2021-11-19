@@ -155,6 +155,8 @@ AdrComponent::BeforeSendingReply (Ptr<EndDeviceStatus> status,
               status->m_reply.macHeader.SetMType (LorawanMacHeader::UNCONFIRMED_DATA_DOWN);
 
               status->m_reply.needsReply = true;
+
+              std::cout << "ADR_FULFILLED: " << ns3::Simulator::Now ().GetDays () << std::endl;
             }
           else
             {

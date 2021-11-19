@@ -33,6 +33,8 @@ namespace ns3
 
             static float PowerConsumption(uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power);
 
+            static float PCON(double bits, uint8_t spreadingfactor, uint32_t bandwidth, int codingrate, float power);
+
             int power;
             int spreadingFactor;
             int bandwidth;

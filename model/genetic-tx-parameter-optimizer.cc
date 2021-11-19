@@ -191,6 +191,8 @@ namespace ns3
                     logFile << std::endl
                             << "MOST FIT: " << std::endl;
                     logFile << MostFitTPS->SPrint() << std::endl;
+                    std::cout << "GAO_CONVERGE_TIME: " << ns3::Simulator::Now().GetDays() << std::endl;
+                    std::cout << std::fixed << "GAO_CONVERG_PARAMETERS: " << MostFitTPS->SPrint() << std::endl;
                     return;
                 }
 

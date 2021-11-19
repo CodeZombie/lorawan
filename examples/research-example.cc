@@ -46,7 +46,7 @@ NS_LOG_COMPONENT_DEFINE("SimpleLorawanNetworkExample");
 void printTimeLoop()
 {
   std::cout << "Current Time: " << Simulator::Now().GetHours() << "h" << std::endl;
-  Simulator::Schedule(Hours(100), &printTimeLoop);
+  Simulator::Schedule(Hours(500), &printTimeLoop);
 }
 
 /*******************************
@@ -60,7 +60,7 @@ int NumberOfNodes = 1182;                  //The number of end-node devices in t
 Time transmitInterval = Hours(24);          //How frequently end-nodes transmit. 0 = Random.
 Time dataCaptureInterval = Hours(2);       //The time in between data sampling.
 std::string adrType = "ns3::AdrComponent"; //????????
-std::string outputFolder = "dat_output";   //Where output files (.dat) will be stored.
+std::string outputFolder = "OUTPUT_2";   //Where output files (.dat) will be stored.
 double maxRandomLoss = 0;                  //The maximum amount of random loss that can be incurred by a transmission.
 double mutationRate = 0.85;                //The rate at which the Genetic Algorithm will mutate a given individual.
 double crossoverRate = 0.6997;             //The rate at which the Genetic Algorithm will crossover two individuals.
@@ -299,8 +299,8 @@ int main(int argc, char *argv[])
   TracePrintHelper *tracePrintHelper;
   tracePrintHelper = new TracePrintHelper(dataCaptureInterval);
   //Setup watchers.
-  tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalEnergyConsumption", &deviceModels, ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
-  //tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalPowerConsumption", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  //tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalEnergyConsumption", &deviceModels, ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
+  tracePrintHelper->AddValueWatcher(new ValueWatcher("TotalPowerConsumption", "/NodeList/*/DeviceList/*/$ns3::LoraNetDevice/Mac/$ns3::ClassAEndDeviceLorawanMac", ValueWatcher::Type::Double, ValueWatcher::CombineMode::Sum, ValueWatcher::SourceType::Attribute, outputFolder + "/"));
 
   if (EnableProbing)
   {
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
   /****************
   *  Simulation  *
   ****************/
-  Simulator::Schedule(Hours(100), &printTimeLoop);
+  Simulator::Schedule(Hours(500), &printTimeLoop);
 
   Simulator::Stop(Hours(simTimeHours));
   Simulator::Run();
@@ -329,8 +329,10 @@ int main(int argc, char *argv[])
     tracker.PrintDiscretePSR(outputFolder + "/", Hours(simTimeHours / 128));
     std::cout << tracker.CountMacPacketsGlobally(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
   }
-  std::cout << "Total Energy Consumption: " << tracePrintHelper->GetDoubleValue("TotalEnergyConsumption") << std::endl;
+  std::cout << "Total Energy Consumption: " << tracePrintHelper->GetDoubleValue("TotalPowerConsumption") << std::endl;
   std::cout << "Packet Reception Rate: " << tracker.GetPacketReceptionRate(Seconds(0), Hours(simTimeHours) + Hours(24)) << std::endl;
+  std::cout << "Packets Sent: " <<tracePrintHelper->GetDoubleValue("PacketsSent") << std::endl;
+  std::cout << "Transmissions Sent: " <<tracePrintHelper->GetDoubleValue("TransmissionsSent") << std::endl;
 
   return 0;
 }

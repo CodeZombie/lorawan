@@ -276,9 +276,11 @@ namespace ns3
       //TotalPowerConsumption += duration.GetSeconds() * m_txPower;
 
       // Supply Voltage = 3.3, ATA = 0.1, Standby= 0.0014
-      double txCurrent = DbmToW (m_txPower) / (3.3 * 0.10) + 0.0014;
-      TotalPowerConsumption += duration.GetSeconds() * 3.3 * txCurrent;
-
+      //double txCurrent = DbmToW(m_txPower);
+      //double joules_per_second = std::pow (10.0, m_txPower / 10.0) / 1000.0;
+      
+      //TotalPowerConsumption += duration.GetSeconds() * joules_per_second; 
+      TotalPowerConsumption += TransmissionParameterSet::PCON(packetToSend->GetSize() * 8, params.sf, params.bandwidthHz, params.codingRate, m_txPower);
       
 
       // Register the sent packet into the DutyCycleHelper
@@ -310,7 +312,15 @@ namespace ns3
 
 
       //std::cout << "ADR: SF=" << +params.sf << " PW=" << m_txPower << " BW=" << +params.bandwidthHz << " CR=" << +params.codingRate << std::endl;
+
+      if(!useGeneticParamaterSelection) {
+        if(TransmissionsSent.Get() % 25 == 0) {
+          std::cout << std::fixed << "ADR GOOD PARAMS: " << " SF:" << +params.sf << " TP:" << m_txPower << " BW:" << +params.bandwidthHz << " CR:" << +params.codingRate << " 12-byte Energy: " << TransmissionParameterSet::PCON(96.0, params.sf, params.bandwidthHz, params.codingRate, m_txPower) << std::endl;
+        }
+      }
     }
+
+
 
     //////////////////////////
     //  Receiving methods   //
